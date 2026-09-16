@@ -10,6 +10,7 @@ export interface CreateProviderPaymentInput {
   currency: string;
   method: PaymentMethod;
   reference: string;
+  payerPhoneNumber?: string;
 }
 
 export interface CreateProviderPaymentResult {

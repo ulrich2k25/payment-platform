@@ -32,6 +32,8 @@ export class PaymentsService {
     method: PaymentMethod,
     reference: string,
     idempotencyKey?: string,
+    payerPhoneNumber?: string,
+    requestedProvider?: PaymentProvider,
   ) {
     const merchant = await this.prisma.merchant.findUnique({
       where: {
@@ -41,6 +43,17 @@ export class PaymentsService {
 
     if (!merchant) {
       throw new NotFoundException('Merchant not found');
+    }
+
+    const providerType = requestedProvider ?? PaymentProvider.SANDBOX;
+
+    if (
+      providerType === PaymentProvider.MTN_MOMO &&
+      method !== PaymentMethod.MOBILE_MONEY
+    ) {
+      throw new BadRequestException(
+        'MTN MoMo can only be used with MOBILE_MONEY payments',
+      );
     }
 
     if (idempotencyKey) {
@@ -58,6 +71,7 @@ export class PaymentsService {
           existingPayment.amount === amount &&
           existingPayment.currency === currency &&
           existingPayment.method === method &&
+          existingPayment.provider === providerType &&
           existingPayment.reference === reference;
 
         if (!sameRequest) {
@@ -81,6 +95,7 @@ export class PaymentsService {
             amount,
             currency,
             method,
+            provider: providerType,
             reference,
             idempotencyKey,
           },
@@ -123,6 +138,7 @@ export class PaymentsService {
               existingPayment.amount === amount &&
               existingPayment.currency === currency &&
               existingPayment.method === method &&
+              existingPayment.provider === providerType &&
               existingPayment.reference === reference;
 
             if (!sameRequest) {
@@ -155,6 +171,7 @@ export class PaymentsService {
         currency,
         method,
         reference,
+        payerPhoneNumber,
       });
     } catch {
       await this.prisma.$transaction([
@@ -235,11 +252,9 @@ export class PaymentsService {
           }),
         ]);
       } catch {
-        // The provider may already have accepted
-        // the payment while the local state
-        // could not be persisted.
-        // Automated reconciliation will handle
-        // this scenario later.
+        // The provider may already have accepted the payment
+        // while the local state could not be persisted.
+        // Automated reconciliation will handle this scenario.
       }
 
       throw new ServiceUnavailableException(

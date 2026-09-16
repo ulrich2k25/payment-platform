@@ -47,6 +47,8 @@ export class PaymentsController {
       body.method,
       body.reference,
       normalizedIdempotencyKey,
+      body.payerPhoneNumber,
+      body.provider,
     );
   }
 
