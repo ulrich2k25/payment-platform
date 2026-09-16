@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "PaymentStatus" ADD VALUE 'REQUIRES_RECONCILIATION';
+
+-- AlterEnum
+ALTER TYPE "TransactionStatus" ADD VALUE 'REQUIRES_RECONCILIATION';

@@ -1,0 +1,44 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/build/
+**/.next/
+**/out/
+
+# Test coverage
+**/coverage/
+**/.nyc_output/
+
+# Environment files / secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Generated Prisma client
+backend/generated/prisma/
+
+# Logs
+**/logs/
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Temporary files
+**/.temp/
+**/.tmp/
+
+# Local AI / editor tooling
+**/.agents/
+**/.claude/
+**/.windsurf/
+
+# IDE / OS
+.idea/
+.DS_Store
+
+# VS Code local settings
+.vscode/

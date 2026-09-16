@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MerchantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  REQUIRES_RECONCILIATION
+}
+
+enum PaymentMethod {
+  MOBILE_MONEY
+  BANK_TRANSFER
+  STELLAR
+}
+
+enum PaymentProvider {
+  SANDBOX
+  MTN_MOMO
+  ORANGE_MONEY
+  STELLAR
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REQUIRES_RECONCILIATION
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  FAILED
+  EXHAUSTED
+}
+
+model Merchant {
+  id         String         @id @default(cuid())
+  name       String
+  email      String         @unique
+  webhookUrl String?
+  webhookSecret String?
+  status     MerchantStatus @default(ACTIVE)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  apiKeys           ApiKey[]
+  payments          Payment[]
+  webhookDeliveries WebhookDelivery[]
+}
+
+model ApiKey {
+  id         String       @id @default(cuid())
+  keyHash    String       @unique
+  merchantId String
+  status     ApiKeyStatus @default(ACTIVE)
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime     @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  merchantId        String
+  amount            Int
+  currency          String
+  method            PaymentMethod
+  provider          PaymentProvider @default(SANDBOX)
+  reference         String
+  providerReference String?
+  idempotencyKey    String?
+  status            PaymentStatus   @default(PENDING)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  merchant          Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transactions      Transaction[]
+  webhookDeliveries WebhookDelivery[]
+
+  @@unique([merchantId, reference])
+  @@unique([merchantId, idempotencyKey])
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  paymentId         String
+  provider          PaymentProvider
+  providerReference String?
+  status            TransactionStatus @default(PENDING)
+  amount            Int
+  currency          String
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model WebhookDelivery {
+  id                  String                @id @default(cuid())
+  merchantId          String
+  paymentId           String
+  event               String
+  webhookUrl          String
+  payload             Json
+  status              WebhookDeliveryStatus @default(PENDING)
+
+  attemptCount        Int                   @default(0)
+  replayCount         Int                   @default(0)
+
+  nextAttemptAt       DateTime              @default(now())
+  processingStartedAt DateTime?
+  lastAttemptAt       DateTime?
+  lastReplayedAt      DateTime?
+  deliveredAt         DateTime?
+
+  lastError           String?
+  responseCode        Int?
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  payment  Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([status, processingStartedAt])
+  @@index([merchantId, createdAt])
+  @@index([paymentId])
+}
