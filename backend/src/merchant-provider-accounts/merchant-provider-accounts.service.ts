@@ -231,6 +231,57 @@ export class MerchantProviderAccountsService {
     };
   }
 
+  async findActiveAccount(merchantId: string, provider: string) {
+    const normalizedProvider = this.normalizeProvider(provider);
+
+    const account = await this.prisma.merchantProviderAccount.findFirst({
+      where: {
+        merchantId,
+        provider: normalizedProvider,
+        status: MerchantProviderAccountStatus.ACTIVE,
+      },
+    });
+
+    if (!account) {
+      throw new NotFoundException(
+        `No active ${normalizedProvider} provider account configured for this merchant`,
+      );
+    }
+
+    return account;
+  }
+
+  async getDecryptedCredentials(
+    providerAccountId: string,
+  ): Promise<Record<string, string>> {
+    const account = await this.prisma.merchantProviderAccount.findUnique({
+      where: {
+        id: providerAccountId,
+      },
+    });
+
+    if (!account) {
+      throw new NotFoundException('Merchant provider account not found');
+    }
+
+    if (!account.credentialsEncrypted) {
+      throw new BadRequestException(
+        `Credentials are not configured for provider ${account.provider}`,
+      );
+    }
+
+    const context = this.getCredentialsContext(
+      account.id,
+      account.merchantId,
+      account.provider,
+    );
+
+    return this.credentialsCrypto.decrypt(
+      account.credentialsEncrypted,
+      context,
+    );
+  }
+
   private async assertMerchantExists(merchantId: string): Promise<void> {
     const merchant = await this.prisma.merchant.findUnique({
       where: {
