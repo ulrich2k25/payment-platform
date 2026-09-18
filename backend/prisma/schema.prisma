@@ -56,19 +56,48 @@ enum WebhookDeliveryStatus {
   EXHAUSTED
 }
 
+enum MerchantProviderAccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Merchant {
-  id         String         @id @default(cuid())
-  name       String
-  email      String         @unique
-  webhookUrl String?
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  webhookUrl    String?
   webhookSecret String?
-  status     MerchantStatus @default(ACTIVE)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  status        MerchantStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   apiKeys           ApiKey[]
   payments          Payment[]
   webhookDeliveries WebhookDelivery[]
+  providerAccounts  MerchantProviderAccount[]
+}
+
+model MerchantProviderAccount {
+  id         String                        @id @default(cuid())
+  merchantId String
+  provider   String
+  status     MerchantProviderAccountStatus @default(INACTIVE)
+
+  isDefault Boolean @default(false)
+  priority  Int     @default(100)
+
+  credentialsEncrypted String? @db.Text
+  externalAccountId    String?
+  configuration        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, provider])
+  @@index([merchantId, status])
+  @@index([provider, status])
 }
 
 model ApiKey {
@@ -120,28 +149,28 @@ model Transaction {
 }
 
 model WebhookDelivery {
-  id                  String                @id @default(cuid())
-  merchantId          String
-  paymentId           String
-  event               String
-  webhookUrl          String
-  payload             Json
-  status              WebhookDeliveryStatus @default(PENDING)
+  id         String                @id @default(cuid())
+  merchantId String
+  paymentId  String
+  event      String
+  webhookUrl String
+  payload    Json
+  status     WebhookDeliveryStatus @default(PENDING)
 
-  attemptCount        Int                   @default(0)
-  replayCount         Int                   @default(0)
+  attemptCount Int @default(0)
+  replayCount  Int @default(0)
 
-  nextAttemptAt       DateTime              @default(now())
+  nextAttemptAt       DateTime @default(now())
   processingStartedAt DateTime?
   lastAttemptAt       DateTime?
   lastReplayedAt      DateTime?
   deliveredAt         DateTime?
 
-  lastError           String?
-  responseCode        Int?
+  lastError    String?
+  responseCode Int?
 
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   payment  Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
