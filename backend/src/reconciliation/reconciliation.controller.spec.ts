@@ -1,15 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ReconciliationController } from './reconciliation.controller';
+import { ReconciliationService } from './reconciliation.service';
 
 describe('ReconciliationController', () => {
   let controller: ReconciliationController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ReconciliationController],
-    }).compile();
+  beforeEach(() => {
+    const reconciliationService = {} as ReconciliationService;
 
-    controller = module.get<ReconciliationController>(ReconciliationController);
+    controller = new ReconciliationController(reconciliationService);
   });
 
   it('should be defined', () => {

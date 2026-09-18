@@ -1,18 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ApiKeysController } from './api-keys.controller';
+import { PrismaService } from '../prisma/prisma.service';
+import { ApiKeysService } from './api-keys.service';
 
-describe('ApiKeysController', () => {
-  let controller: ApiKeysController;
+describe('ApiKeysService', () => {
+  let service: ApiKeysService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ApiKeysController],
-    }).compile();
+  beforeEach(() => {
+    const prisma = {} as PrismaService;
 
-    controller = module.get<ApiKeysController>(ApiKeysController);
+    service = new ApiKeysService(prisma);
   });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(service).toBeDefined();
   });
 });

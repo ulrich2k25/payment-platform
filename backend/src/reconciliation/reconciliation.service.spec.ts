@@ -1,15 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
+import { ProvidersService } from '../providers/providers.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 import { ReconciliationService } from './reconciliation.service';
 
 describe('ReconciliationService', () => {
   let service: ReconciliationService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ReconciliationService],
-    }).compile();
+  beforeEach(() => {
+    const prisma = {} as PrismaService;
+    const providersService = {} as ProvidersService;
+    const webhooksService = {} as WebhooksService;
 
-    service = module.get<ReconciliationService>(ReconciliationService);
+    service = new ReconciliationService(
+      prisma,
+      providersService,
+      webhooksService,
+    );
   });
 
   it('should be defined', () => {
