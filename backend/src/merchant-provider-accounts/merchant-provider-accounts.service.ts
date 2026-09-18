@@ -9,6 +9,7 @@ import {
   Prisma,
 } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProviderCredentialsCryptoService } from '../security/provider-credentials-crypto.service';
 import { CreateMerchantProviderAccountDto } from './dto/create-merchant-provider-account.dto';
 import { UpdateMerchantProviderAccountDto } from './dto/update-merchant-provider-account.dto';
 
@@ -27,16 +28,18 @@ const providerAccountPublicSelect = {
 
 @Injectable()
 export class MerchantProviderAccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly credentialsCrypto: ProviderCredentialsCryptoService,
+  ) {}
 
   async findAllForMerchant(merchantId: string) {
     await this.assertMerchantExists(merchantId);
 
-    return this.prisma.merchantProviderAccount.findMany({
+    const accounts = await this.prisma.merchantProviderAccount.findMany({
       where: {
         merchantId,
       },
-      select: providerAccountPublicSelect,
       orderBy: [
         {
           isDefault: 'desc',
@@ -49,6 +52,20 @@ export class MerchantProviderAccountsService {
         },
       ],
     });
+
+    return accounts.map((account) => ({
+      id: account.id,
+      merchantId: account.merchantId,
+      provider: account.provider,
+      status: account.status,
+      isDefault: account.isDefault,
+      priority: account.priority,
+      externalAccountId: account.externalAccountId,
+      configuration: account.configuration,
+      credentialsConfigured: Boolean(account.credentialsEncrypted),
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    }));
   }
 
   async create(merchantId: string, dto: CreateMerchantProviderAccountDto) {
@@ -171,6 +188,49 @@ export class MerchantProviderAccountsService {
     });
   }
 
+  async updateCredentials(
+    providerAccountId: string,
+    rawCredentials: Record<string, unknown>,
+  ) {
+    const account = await this.prisma.merchantProviderAccount.findUnique({
+      where: {
+        id: providerAccountId,
+      },
+    });
+
+    if (!account) {
+      throw new NotFoundException('Merchant provider account not found');
+    }
+
+    const credentials = this.validateAndNormalizeCredentials(rawCredentials);
+
+    const context = this.getCredentialsContext(
+      account.id,
+      account.merchantId,
+      account.provider,
+    );
+
+    const credentialsEncrypted = this.credentialsCrypto.encrypt(
+      credentials,
+      context,
+    );
+
+    const updated = await this.prisma.merchantProviderAccount.update({
+      where: {
+        id: providerAccountId,
+      },
+      data: {
+        credentialsEncrypted,
+      },
+      select: providerAccountPublicSelect,
+    });
+
+    return {
+      ...updated,
+      credentialsConfigured: true,
+    };
+  }
+
   private async assertMerchantExists(merchantId: string): Promise<void> {
     const merchant = await this.prisma.merchant.findUnique({
       where: {
@@ -188,5 +248,54 @@ export class MerchantProviderAccountsService {
 
   private normalizeProvider(provider: string): string {
     return provider.trim().toUpperCase();
+  }
+
+  private validateAndNormalizeCredentials(
+    rawCredentials: Record<string, unknown>,
+  ): Record<string, string> {
+    const entries = Object.entries(rawCredentials);
+
+    if (entries.length === 0) {
+      throw new BadRequestException(
+        'At least one provider credential is required',
+      );
+    }
+
+    const credentials: Record<string, string> = {};
+
+    for (const [key, rawValue] of entries) {
+      if (!/^[A-Za-z][A-Za-z0-9_]{0,99}$/.test(key)) {
+        throw new BadRequestException(
+          `Invalid provider credential name: ${key}`,
+        );
+      }
+
+      if (typeof rawValue !== 'string' || rawValue.trim().length === 0) {
+        throw new BadRequestException(
+          `Provider credential ${key} must be a non-empty string`,
+        );
+      }
+
+      if (rawValue.length > 4096) {
+        throw new BadRequestException(`Provider credential ${key} is too long`);
+      }
+
+      credentials[key] = rawValue;
+    }
+
+    return credentials;
+  }
+
+  private getCredentialsContext(
+    providerAccountId: string,
+    merchantId: string,
+    provider: string,
+  ): string {
+    return [
+      'merchant-provider-account',
+      providerAccountId,
+      merchantId,
+      provider,
+    ].join(':');
   }
 }

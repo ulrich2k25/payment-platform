@@ -5,11 +5,13 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { AdminApiKeyGuard } from '../admin/guards/admin-api-key.guard';
 import { CreateMerchantProviderAccountDto } from './dto/create-merchant-provider-account.dto';
 import { UpdateMerchantProviderAccountDto } from './dto/update-merchant-provider-account.dto';
+import { UpdateProviderCredentialsDto } from './dto/update-provider-credentials.dto';
 import { MerchantProviderAccountsService } from './merchant-provider-accounts.service';
 
 @Controller('merchant-provider-accounts')
@@ -38,5 +40,16 @@ export class MerchantProviderAccountsController {
     @Body() body: UpdateMerchantProviderAccountDto,
   ) {
     return this.merchantProviderAccountsService.update(id, body);
+  }
+
+  @Put(':id/credentials')
+  updateCredentials(
+    @Param('id') id: string,
+    @Body() body: UpdateProviderCredentialsDto,
+  ) {
+    return this.merchantProviderAccountsService.updateCredentials(
+      id,
+      body.credentials,
+    );
   }
 }
