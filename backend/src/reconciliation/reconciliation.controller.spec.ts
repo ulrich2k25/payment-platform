@@ -1,3 +1,7 @@
+jest.mock('@nestjs/config', () => ({
+  ConfigService: class ConfigService {},
+}));
+
 import { ReconciliationController } from './reconciliation.controller';
 import { ReconciliationService } from './reconciliation.service';
 

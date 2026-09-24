@@ -1,16 +1,27 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import {
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  Cron,
+  CronExpression,
+} from '@nestjs/schedule';
+import {
+  PaymentProvider,
   PaymentStatus,
   TransactionStatus,
 } from '../../generated/prisma/client';
+import { MerchantProviderAccountsService } from '../merchant-provider-accounts/merchant-provider-accounts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProvidersService } from '../providers/providers.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class ReconciliationService {
-  private readonly logger = new Logger(ReconciliationService.name);
+  private readonly logger = new Logger(
+    ReconciliationService.name,
+  );
 
   private reconciliationRunning = false;
 
@@ -18,36 +29,69 @@ export class ReconciliationService {
     private readonly prisma: PrismaService,
     private readonly providersService: ProvidersService,
     private readonly webhooksService: WebhooksService,
+    private readonly merchantProviderAccountsService: MerchantProviderAccountsService,
   ) {}
 
-  async reconcilePayment(merchantId: string, paymentId: string) {
-    const payment = await this.prisma.payment.findFirst({
-      where: {
-        id: paymentId,
-        merchantId,
-      },
-      include: {
-        merchant: true,
-        transactions: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          take: 1,
+  async reconcilePayment(
+    merchantId: string,
+    paymentId: string,
+  ) {
+    const payment =
+      await this.prisma.payment.findFirst({
+        where: {
+          id: paymentId,
+          merchantId,
         },
-      },
-    });
+        include: {
+          merchant: true,
+          transactions: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
 
     if (!payment) {
-      throw new NotFoundException('Payment not found');
+      throw new NotFoundException(
+        'Payment not found',
+      );
     }
 
-    if (payment.status !== PaymentStatus.REQUIRES_RECONCILIATION) {
+    const transaction =
+      payment.transactions[0];
+
+    if (!transaction) {
+      this.logger.warn(
+        `Payment ${payment.id} cannot be reconciled because no transaction is available`,
+      );
+
       return payment;
     }
 
-    const transaction = payment.transactions[0];
+    const isRecoveryReconciliation =
+      payment.status ===
+      PaymentStatus.REQUIRES_RECONCILIATION;
 
-    if (!transaction || !transaction.providerReference) {
+    const isFapshiPendingPayment =
+      transaction.provider ===
+        PaymentProvider.FAPSHI &&
+      (
+        payment.status ===
+          PaymentStatus.PENDING ||
+        payment.status ===
+          PaymentStatus.PROCESSING
+      );
+
+    if (
+      !isRecoveryReconciliation &&
+      !isFapshiPendingPayment
+    ) {
+      return payment;
+    }
+
+    if (!transaction.providerReference) {
       this.logger.warn(
         `Payment ${payment.id} cannot be reconciled because no provider reference is available`,
       );
@@ -55,59 +99,100 @@ export class ReconciliationService {
       return payment;
     }
 
-    const provider = this.providersService.getProvider(transaction.provider);
+    const provider =
+      this.providersService.getProvider(
+        transaction.provider,
+      );
 
-    const providerResult = await provider.getPaymentStatus({
-      providerReference: transaction.providerReference,
-    });
+    let providerCredentials:
+      | Record<string, string>
+      | undefined;
 
-    const providerStatus = providerResult.status;
-
-    const paymentStatus =
-      providerStatus === TransactionStatus.COMPLETED
-        ? PaymentStatus.COMPLETED
-        : providerStatus === TransactionStatus.FAILED
-          ? PaymentStatus.FAILED
-          : PaymentStatus.REQUIRES_RECONCILIATION;
-
-    const updatedPayment = await this.prisma.$transaction(async (tx) => {
-      await tx.transaction.update({
-        where: {
-          id: transaction.id,
-        },
-        data: {
-          status: providerStatus,
-        },
-      });
-
-      const updated = await tx.payment.update({
-        where: {
-          id: payment.id,
-        },
-        data: {
-          status: paymentStatus,
-        },
-      });
-
-      if (
-        paymentStatus === PaymentStatus.COMPLETED &&
-        payment.merchant.webhookUrl
-      ) {
-        await this.webhooksService.sendPaymentCompleted(
-          payment.merchant.webhookUrl,
-          {
-            id: updated.id,
-            merchantId: updated.merchantId,
-            amount: updated.amount,
-            currency: updated.currency,
-            reference: updated.reference,
-          },
-          tx,
+    if (
+      transaction.provider ===
+      PaymentProvider.FAPSHI
+    ) {
+      if (!transaction.providerAccountId) {
+        this.logger.warn(
+          `Payment ${payment.id} cannot be reconciled because its Fapshi transaction has no provider account`,
         );
+
+        return payment;
       }
 
-      return updated;
-    });
+      providerCredentials =
+        await this.merchantProviderAccountsService
+          .getDecryptedCredentials(
+            transaction.providerAccountId,
+          );
+    }
+
+    const providerResult =
+      await provider.getPaymentStatus({
+        providerReference:
+          transaction.providerReference,
+        providerCredentials,
+      });
+
+    const providerStatus =
+      providerResult.status;
+
+    const paymentStatus =
+      this.mapPaymentStatus(
+        payment.status,
+        providerStatus,
+      );
+
+    const updatedPayment =
+      await this.prisma.$transaction(
+        async (tx) => {
+          await tx.transaction.update({
+            where: {
+              id: transaction.id,
+            },
+            data: {
+              status: providerStatus,
+            },
+          });
+
+          const updated =
+            await tx.payment.update({
+              where: {
+                id: payment.id,
+              },
+              data: {
+                status: paymentStatus,
+              },
+            });
+
+          if (
+            paymentStatus ===
+              PaymentStatus.COMPLETED &&
+            payment.status !==
+              PaymentStatus.COMPLETED &&
+            payment.merchant.webhookUrl
+          ) {
+            await this.webhooksService
+              .sendPaymentCompleted(
+                payment.merchant.webhookUrl,
+                {
+                  id: updated.id,
+                  merchantId:
+                    updated.merchantId,
+                  amount:
+                    updated.amount,
+                  currency:
+                    updated.currency,
+                  reference:
+                    updated.reference,
+                },
+                tx,
+              );
+          }
+
+          return updated;
+        },
+      );
 
     this.logger.log(
       `Payment ${payment.id} reconciled: provider=${providerStatus}, payment=${paymentStatus}`,
@@ -117,18 +202,34 @@ export class ReconciliationService {
   }
 
   async reconcilePendingPayments() {
-    const payments = await this.prisma.payment.findMany({
-      where: {
-        status: PaymentStatus.REQUIRES_RECONCILIATION,
-      },
-      select: {
-        id: true,
-        merchantId: true,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    const payments =
+      await this.prisma.payment.findMany({
+        where: {
+          OR: [
+            {
+              status:
+                PaymentStatus.REQUIRES_RECONCILIATION,
+            },
+            {
+              provider:
+                PaymentProvider.FAPSHI,
+              status: {
+                in: [
+                  PaymentStatus.PENDING,
+                  PaymentStatus.PROCESSING,
+                ],
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          merchantId: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
 
     const results: Array<{
       paymentId: string;
@@ -139,15 +240,17 @@ export class ReconciliationService {
 
     for (const payment of payments) {
       try {
-        const reconciledPayment = await this.reconcilePayment(
-          payment.merchantId,
-          payment.id,
-        );
+        const reconciledPayment =
+          await this.reconcilePayment(
+            payment.merchantId,
+            payment.id,
+          );
 
         results.push({
           paymentId: payment.id,
           success: true,
-          status: reconciledPayment.status,
+          status:
+            reconciledPayment.status,
         });
       } catch (error) {
         const message =
@@ -169,8 +272,12 @@ export class ReconciliationService {
 
     return {
       processed: payments.length,
-      succeeded: results.filter((result) => result.success).length,
-      failed: results.filter((result) => !result.success).length,
+      succeeded: results.filter(
+        (result) => result.success,
+      ).length,
+      failed: results.filter(
+        (result) => !result.success,
+      ).length,
       results,
     };
   }
@@ -188,7 +295,8 @@ export class ReconciliationService {
     this.reconciliationRunning = true;
 
     try {
-      const result = await this.reconcilePendingPayments();
+      const result =
+        await this.reconcilePendingPayments();
 
       if (result.processed > 0) {
         this.logger.log(
@@ -197,11 +305,50 @@ export class ReconciliationService {
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Unknown reconciliation error';
+        error instanceof Error
+          ? error.message
+          : 'Unknown reconciliation error';
 
-      this.logger.error(`Automatic reconciliation failed: ${message}`);
+      this.logger.error(
+        `Automatic reconciliation failed: ${message}`,
+      );
     } finally {
       this.reconciliationRunning = false;
     }
+  }
+
+  private mapPaymentStatus(
+    currentPaymentStatus: PaymentStatus,
+    providerStatus: TransactionStatus,
+  ): PaymentStatus {
+    if (
+      providerStatus ===
+      TransactionStatus.COMPLETED
+    ) {
+      return PaymentStatus.COMPLETED;
+    }
+
+    if (
+      providerStatus ===
+      TransactionStatus.FAILED
+    ) {
+      return PaymentStatus.FAILED;
+    }
+
+    if (
+      currentPaymentStatus ===
+      PaymentStatus.REQUIRES_RECONCILIATION
+    ) {
+      return PaymentStatus.REQUIRES_RECONCILIATION;
+    }
+
+    if (
+      providerStatus ===
+      TransactionStatus.PROCESSING
+    ) {
+      return PaymentStatus.PROCESSING;
+    }
+
+    return PaymentStatus.PENDING;
   }
 }
