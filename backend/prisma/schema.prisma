@@ -30,6 +30,7 @@ enum PaymentMethod {
 
 enum PaymentProvider {
   SANDBOX
+  FAPSHI
   MTN_MOMO
   ORANGE_MONEY
   STELLAR
@@ -93,7 +94,8 @@ model MerchantProviderAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  merchant     Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
 
   @@unique([merchantId, provider])
   @@index([merchantId, status])
@@ -138,6 +140,7 @@ model Transaction {
   id                String            @id @default(cuid())
   paymentId         String
   provider          PaymentProvider
+  providerAccountId String?
   providerReference String?
   status            TransactionStatus @default(PENDING)
   amount            Int
@@ -145,7 +148,10 @@ model Transaction {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
-  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  payment         Payment                  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  providerAccount MerchantProviderAccount? @relation(fields: [providerAccountId], references: [id], onDelete: SetNull)
+
+  @@index([providerAccountId])
 }
 
 model WebhookDelivery {
