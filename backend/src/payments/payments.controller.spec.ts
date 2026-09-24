@@ -1,3 +1,7 @@
+jest.mock('@nestjs/config', () => ({
+  ConfigService: class ConfigService {},
+}));
+
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 

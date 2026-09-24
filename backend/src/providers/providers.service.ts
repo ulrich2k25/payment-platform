@@ -1,5 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
 import { PaymentProvider as PaymentProviderType } from '../../generated/prisma/client';
+import { FapshiProvider } from './fapshi/fapshi.provider';
 import { PaymentProvider } from './interfaces/payment-provider.interface';
 import { MtnMomoProvider } from './mtn-momo/mtn-momo.provider';
 import { SandboxProvider } from './sandbox/sandbox.provider';
@@ -8,13 +12,19 @@ import { SandboxProvider } from './sandbox/sandbox.provider';
 export class ProvidersService {
   constructor(
     private readonly sandboxProvider: SandboxProvider,
+    private readonly fapshiProvider: FapshiProvider,
     private readonly mtnMomoProvider: MtnMomoProvider,
   ) {}
 
-  getProvider(provider: PaymentProviderType): PaymentProvider {
+  getProvider(
+    provider: PaymentProviderType,
+  ): PaymentProvider {
     switch (provider) {
       case PaymentProviderType.SANDBOX:
         return this.sandboxProvider;
+
+      case PaymentProviderType.FAPSHI:
+        return this.fapshiProvider;
 
       case PaymentProviderType.MTN_MOMO:
         return this.mtnMomoProvider;

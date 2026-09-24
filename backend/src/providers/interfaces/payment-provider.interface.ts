@@ -11,6 +11,8 @@ export interface CreateProviderPaymentInput {
   method: PaymentMethod;
   reference: string;
   payerPhoneNumber?: string;
+
+  providerCredentials?: Record<string, string>;
 }
 
 export interface CreateProviderPaymentResult {
@@ -20,6 +22,8 @@ export interface CreateProviderPaymentResult {
 
 export interface GetProviderPaymentStatusInput {
   providerReference: string;
+
+  providerCredentials?: Record<string, string>;
 }
 
 export interface GetProviderPaymentStatusResult {
