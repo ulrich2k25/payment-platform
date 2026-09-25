@@ -47,6 +47,7 @@ const navigation = [
   {
     label: "Providers",
     icon: Network,
+    href: "/providers",
   },
   {
     label: "Webhooks",
