@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Activity,
   Building2,
@@ -25,11 +27,12 @@ const navigation = [
   {
     label: "Vue d’ensemble",
     icon: LayoutDashboard,
-    active: true,
+    href: "/",
   },
   {
     label: "Paiements",
     icon: CreditCard,
+    href: "/payments",
   },
   {
     label: "Transactions",
@@ -54,6 +57,8 @@ const navigation = [
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-20 items-center px-5">
@@ -81,29 +86,57 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           {navigation.map((item) => {
             const Icon = item.icon;
 
-            return (
-              <button
-                key={item.label}
-                type="button"
-                onClick={onNavigate}
-                className={[
-                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-200",
-                  item.active
-                    ? "bg-[#c8a24a]/10 font-medium text-white shadow-[inset_0_0_0_1px_rgba(200,162,74,0.16)]"
-                    : "text-slate-400 hover:bg-white/[0.05] hover:text-white",
-                ].join(" ")}
-              >
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : item.href
+                  ? pathname.startsWith(item.href)
+                  : false;
+
+            const classes = [
+              "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-200",
+              active
+                ? "bg-[#c8a24a]/10 font-medium text-white shadow-[inset_0_0_0_1px_rgba(200,162,74,0.16)]"
+                : "text-slate-400 hover:bg-white/[0.05] hover:text-white",
+            ].join(" ");
+
+            const content = (
+              <>
                 <Icon
                   size={18}
-                  strokeWidth={item.active ? 2.2 : 1.8}
+                  strokeWidth={active ? 2.2 : 1.8}
                   className={
-                    item.active
+                    active
                       ? "text-[#e6c76d]"
                       : "text-slate-500 group-hover:text-slate-300"
                   }
                 />
 
                 <span>{item.label}</span>
+              </>
+            );
+
+            if (item.href) {
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={classes}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={onNavigate}
+                className={classes}
+              >
+                {content}
               </button>
             );
           })}
