@@ -37,6 +37,7 @@ const navigation = [
   {
     label: "Transactions",
     icon: Activity,
+    href: "/transactions",
   },
   {
     label: "Marchands",

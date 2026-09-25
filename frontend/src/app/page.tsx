@@ -12,6 +12,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -356,13 +357,13 @@ export default async function Home() {
               </button>
             </form>
 
-            <button
-              type="button"
+            <Link
+              href="/payments"
               className="flex h-10 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-sm font-medium text-white shadow-[0_10px_24px_rgba(10,14,23,0.18)] transition hover:bg-[#151b28]"
             >
               Voir les paiements
               <ArrowRight size={15} className="text-[#e6c76d]" />
-            </button>
+            </Link>
           </div>
         </section>
 
