@@ -13,82 +13,189 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
-const stats = [
-  {
-    label: "Volume traité",
-    value: "152 500 XAF",
-    detail: "+12,8 %",
-    trend: "up",
-    icon: CircleDollarSign,
-  },
-  {
-    label: "Paiements",
-    value: "48",
-    detail: "+8 aujourd’hui",
-    trend: "up",
-    icon: WalletCards,
-  },
-  {
-    label: "Taux de succès",
-    value: "96,7 %",
-    detail: "+1,4 %",
-    trend: "up",
-    icon: CheckCircle2,
-  },
-  {
-    label: "En attente",
-    value: "3",
-    detail: "À surveiller",
-    trend: "neutral",
-    icon: Clock3,
-  },
-];
+export const dynamic = "force-dynamic";
 
-const payments = [
-  {
-    reference: "UBIZA-PREMIUM-4821",
-    merchant: "Ubiza",
-    provider: "Fapshi",
-    amount: "5 000 XAF",
-    status: "COMPLETED",
-    time: "Il y a 2 min",
-  },
-  {
-    reference: "UBIZA-BOOST-4819",
-    merchant: "Ubiza",
-    provider: "Fapshi",
-    amount: "1 000 XAF",
-    status: "COMPLETED",
-    time: "Il y a 8 min",
-  },
-  {
-    reference: "UBIZA-PREMIUM-4817",
-    merchant: "Ubiza",
-    provider: "Fapshi",
-    amount: "5 000 XAF",
-    status: "PENDING",
-    time: "Il y a 14 min",
-  },
-  {
-    reference: "UBIZA-BOOST-4814",
-    merchant: "Ubiza",
-    provider: "Fapshi",
-    amount: "1 000 XAF",
-    status: "FAILED",
-    time: "Il y a 27 min",
-  },
-];
+type Payment = {
+  id: string;
+  merchantId: string;
+  amount: number;
+  currency: string;
+  method: string;
+  provider: string;
+  reference: string;
+  providerReference: string | null;
+  idempotencyKey: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type PaymentsResponse = {
+  data: Payment[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+};
+
+type PaymentsPageResult = {
+  payload: PaymentsResponse;
+  responseDate: string | null;
+};
+
+type DashboardPaymentsResult = {
+  payments: Payment[];
+  referenceTimestamp: number;
+};
+
+const API_URL = process.env.PAYMENT_API_URL;
+const UBIZA_API_KEY = process.env.UBIZA_API_KEY;
+
+async function fetchPaymentsPage(
+  page: number,
+  limit: number,
+): Promise<PaymentsPageResult> {
+  if (!API_URL) {
+    throw new Error("PAYMENT_API_URL is missing.");
+  }
+
+  if (!UBIZA_API_KEY) {
+    throw new Error("UBIZA_API_KEY is missing.");
+  }
+
+  const response = await fetch(
+    `${API_URL}/payments?page=${page}&limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${UBIZA_API_KEY}`,
+      },
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Payment API returned HTTP ${response.status}.`);
+  }
+
+  const payload = (await response.json()) as PaymentsResponse;
+
+  return {
+    payload,
+    responseDate: response.headers.get("date"),
+  };
+}
+
+async function getAllPayments(): Promise<DashboardPaymentsResult> {
+  const limit = 100;
+  const firstPageResult = await fetchPaymentsPage(1, limit);
+  const firstPage = firstPageResult.payload;
+
+  const responseTimestamp = firstPageResult.responseDate
+    ? Date.parse(firstPageResult.responseDate)
+    : Number.NaN;
+
+  const fallbackTimestamp = firstPage.data[0]
+    ? Date.parse(firstPage.data[0].updatedAt ?? firstPage.data[0].createdAt)
+    : 0;
+
+  const referenceTimestamp = Number.isNaN(responseTimestamp)
+    ? fallbackTimestamp
+    : responseTimestamp;
+
+  if (firstPage.meta.totalPages <= 1) {
+    return {
+      payments: firstPage.data,
+      referenceTimestamp,
+    };
+  }
+
+  const remainingPages = await Promise.all(
+    Array.from(
+      { length: firstPage.meta.totalPages - 1 },
+      (_, index) => index + 2,
+    ).map((page) => fetchPaymentsPage(page, limit)),
+  );
+
+  return {
+    payments: [
+      ...firstPage.data,
+      ...remainingPages.flatMap((page) => page.payload.data),
+    ],
+    referenceTimestamp,
+  };
+}
+
+function formatAmount(amount: number, currency: string) {
+  return `${new Intl.NumberFormat("fr-FR", {
+    maximumFractionDigits: 0,
+  }).format(amount)} ${currency}`;
+}
+
+function formatPercentage(value: number) {
+  return `${value.toLocaleString("fr-FR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} %`;
+}
+
+function formatRelativeTime(dateString: string, referenceTimestamp: number) {
+  const timestamp = new Date(dateString).getTime();
+  const difference = Math.max(0, referenceTimestamp - timestamp);
+
+  if (difference < 60_000) {
+    return "À l’instant";
+  }
+
+  const minutes = Math.floor(difference / 60_000);
+
+  if (minutes < 60) {
+    return `Il y a ${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `Il y a ${hours} h`;
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(dateString));
+}
+
+function formatProvider(provider: string) {
+  if (provider === "FAPSHI") {
+    return "Fapshi";
+  }
+
+  return provider
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
     PENDING: "border-amber-200 bg-amber-50 text-amber-700",
+    PROCESSING: "border-amber-200 bg-amber-50 text-amber-700",
+    REQUIRES_RECONCILIATION: "border-amber-200 bg-amber-50 text-amber-700",
     FAILED: "border-rose-200 bg-rose-50 text-rose-700",
   };
 
   const dotStyles: Record<string, string> = {
     COMPLETED: "bg-emerald-500",
     PENDING: "bg-amber-500",
+    PROCESSING: "bg-amber-500",
+    REQUIRES_RECONCILIATION: "bg-amber-500",
     FAILED: "bg-rose-500",
   };
 
@@ -109,7 +216,110 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  let payments: Payment[] = [];
+  let apiOnline = true;
+  let referenceTimestamp = 0;
+
+  try {
+    const result = await getAllPayments();
+
+    payments = result.payments;
+    referenceTimestamp = result.referenceTimestamp;
+  } catch (error) {
+    apiOnline = false;
+
+    console.error("Unable to load dashboard payments:", error);
+  }
+
+  const sortedPayments = [...payments].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
+  const completedPayments = payments.filter(
+    (payment) => payment.status === "COMPLETED",
+  );
+
+  const pendingPayments = payments.filter((payment) =>
+    ["PENDING", "PROCESSING", "REQUIRES_RECONCILIATION"].includes(
+      payment.status,
+    ),
+  );
+
+  const failedPayments = payments.filter(
+    (payment) => payment.status === "FAILED",
+  );
+
+  const completedVolume = completedPayments.reduce(
+    (total, payment) => total + payment.amount,
+    0,
+  );
+
+  const resolvedPaymentsCount =
+    completedPayments.length + failedPayments.length;
+
+  const successRate =
+    resolvedPaymentsCount > 0
+      ? (completedPayments.length / resolvedPaymentsCount) * 100
+      : 0;
+
+  const last24HoursThreshold = referenceTimestamp - 24 * 60 * 60 * 1000;
+
+  const paymentsLast24Hours = payments.filter(
+    (payment) => new Date(payment.createdAt).getTime() >= last24HoursThreshold,
+  );
+
+  const successfulLast24Hours = paymentsLast24Hours.filter(
+    (payment) => payment.status === "COMPLETED",
+  ).length;
+
+  const failedLast24Hours = paymentsLast24Hours.filter(
+    (payment) => payment.status === "FAILED",
+  ).length;
+
+  const resolvedLast24Hours = successfulLast24Hours + failedLast24Hours;
+
+  const successRateLast24Hours =
+    resolvedLast24Hours > 0
+      ? (successfulLast24Hours / resolvedLast24Hours) * 100
+      : 0;
+
+  const currency =
+    completedPayments[0]?.currency ?? payments[0]?.currency ?? "XAF";
+
+  const stats = [
+    {
+      label: "Volume traité",
+      value: formatAmount(completedVolume, currency),
+      detail: `${completedPayments.length} complétés`,
+      trend: "up",
+      icon: CircleDollarSign,
+    },
+    {
+      label: "Paiements",
+      value: payments.length.toString(),
+      detail: `${paymentsLast24Hours.length} sur 24 h`,
+      trend: "up",
+      icon: WalletCards,
+    },
+    {
+      label: "Taux de succès",
+      value: formatPercentage(successRate),
+      detail: `${resolvedPaymentsCount} finalisés`,
+      trend: "up",
+      icon: CheckCircle2,
+    },
+    {
+      label: "En attente",
+      value: pendingPayments.length.toString(),
+      detail: pendingPayments.length > 0 ? "À surveiller" : "Aucun en attente",
+      trend: "neutral",
+      icon: Clock3,
+    },
+  ];
+
+  const recentPayments = sortedPayments.slice(0, 5);
+
   return (
     <DashboardShell>
       <div className="mx-auto max-w-[1500px]">
@@ -121,7 +331,7 @@ export default function Home() {
               </span>
 
               <span className="text-xs text-slate-400">
-                Données de démonstration
+                Données réelles · Ubiza
               </span>
             </div>
 
@@ -136,13 +346,15 @@ export default function Home() {
           </div>
 
           <div className="flex gap-3">
-            <button
-              type="button"
-              className="flex h-10 items-center gap-2 rounded-xl border border-[#ded9cd] bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#c8a24a]/50 hover:bg-[#fffdf8]"
-            >
-              <RefreshCw size={15} />
-              Actualiser
-            </button>
+            <form action="/" method="get">
+              <button
+                type="submit"
+                className="flex h-10 items-center gap-2 rounded-xl border border-[#ded9cd] bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#c8a24a]/50 hover:bg-[#fffdf8]"
+              >
+                <RefreshCw size={15} />
+                Actualiser
+              </button>
+            </form>
 
             <button
               type="button"
@@ -153,6 +365,19 @@ export default function Home() {
             </button>
           </div>
         </section>
+
+        {!apiOnline && (
+          <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
+            <div className="text-sm font-semibold text-rose-700">
+              Payment API indisponible
+            </div>
+
+            <p className="mt-1 text-xs leading-5 text-rose-600">
+              Le dashboard n’a pas pu récupérer les paiements. Vérifiez que le
+              backend est démarré et que la configuration locale est correcte.
+            </p>
+          </div>
+        )}
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => {
@@ -263,55 +488,69 @@ export default function Home() {
                 </thead>
 
                 <tbody>
-                  {payments.map((payment) => (
-                    <tr
-                      key={payment.reference}
-                      className="border-b border-[#f0ede6] last:border-0 hover:bg-[#fdfbf6]"
-                    >
-                      <td className="px-5 py-4">
-                        <div className="font-mono text-xs font-medium text-slate-700">
-                          {payment.reference}
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6dc] text-[#a67c20]">
-                            <Building2 size={14} />
+                  {recentPayments.length > 0 ? (
+                    recentPayments.map((payment) => (
+                      <tr
+                        key={payment.id}
+                        className="border-b border-[#f0ede6] last:border-0 hover:bg-[#fdfbf6]"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="max-w-[220px] truncate font-mono text-xs font-medium text-slate-700">
+                            {payment.reference}
                           </div>
+                        </td>
 
-                          <span className="text-sm font-medium text-slate-700">
-                            {payment.merchant}
-                          </span>
-                        </div>
-                      </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fff6dc] text-[#a67c20]">
+                              <Building2 size={14} />
+                            </div>
 
-                      <td className="px-5 py-4 text-sm text-slate-500">
-                        {payment.provider}
-                      </td>
+                            <span className="text-sm font-medium text-slate-700">
+                              Ubiza
+                            </span>
+                          </div>
+                        </td>
 
-                      <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
-                        {payment.amount}
-                      </td>
+                        <td className="px-5 py-4 text-sm text-slate-500">
+                          {formatProvider(payment.provider)}
+                        </td>
 
-                      <td className="px-5 py-4">
-                        <StatusBadge status={payment.status} />
-                      </td>
+                        <td className="px-5 py-4 text-sm font-semibold text-[#111827]">
+                          {formatAmount(payment.amount, payment.currency)}
+                        </td>
 
-                      <td className="px-5 py-4 text-right text-xs text-slate-400">
-                        {payment.time}
-                      </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge status={payment.status} />
+                        </td>
 
-                      <td className="pr-4">
-                        <button
-                          type="button"
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-[#fff6dc] hover:text-[#9a7523]"
-                        >
-                          <MoreHorizontal size={17} />
-                        </button>
+                        <td className="px-5 py-4 text-right text-xs text-slate-400">
+                          {formatRelativeTime(
+                            payment.createdAt,
+                            referenceTimestamp,
+                          )}
+                        </td>
+
+                        <td className="pr-4">
+                          <button
+                            type="button"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-[#fff6dc] hover:text-[#9a7523]"
+                          >
+                            <MoreHorizontal size={17} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="px-5 py-12 text-center text-sm text-slate-400"
+                      >
+                        Aucun paiement disponible.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -327,13 +566,26 @@ export default function Home() {
                     </div>
 
                     <h2 className="mt-1 text-lg font-semibold tracking-tight">
-                      Système opérationnel
+                      {apiOnline
+                        ? "Système opérationnel"
+                        : "Connexion dégradée"}
                     </h2>
                   </div>
 
-                  <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Healthy
+                  <span
+                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+                      apiOnline
+                        ? "border-emerald-400/15 bg-emerald-400/10 text-emerald-300"
+                        : "border-rose-400/15 bg-rose-400/10 text-rose-300"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        apiOnline ? "bg-emerald-400" : "bg-rose-400"
+                      }`}
+                    />
+
+                    {apiOnline ? "Healthy" : "Unavailable"}
                   </span>
                 </div>
 
@@ -341,8 +593,12 @@ export default function Home() {
                   <div className="flex items-center justify-between border-b border-white/[0.07] pb-4">
                     <span className="text-xs text-slate-400">API Backend</span>
 
-                    <span className="text-xs font-medium text-white">
-                      Online
+                    <span
+                      className={`text-xs font-medium ${
+                        apiOnline ? "text-white" : "text-rose-300"
+                      }`}
+                    >
+                      {apiOnline ? "Online" : "Offline"}
                     </span>
                   </div>
 
@@ -352,15 +608,17 @@ export default function Home() {
                     </span>
 
                     <span className="text-xs font-medium text-white">
-                      Connected
+                      Configured
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">Webhook</span>
+                    <span className="text-xs text-slate-400">
+                      Données paiements
+                    </span>
 
                     <span className="text-xs font-medium text-[#e6c76d]">
-                      Active
+                      {payments.length} chargés
                     </span>
                   </div>
                 </div>
@@ -388,7 +646,7 @@ export default function Home() {
                 <div className="flex items-end justify-between">
                   <div>
                     <div className="text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
-                      96,7%
+                      {formatPercentage(successRateLast24Hours)}
                     </div>
 
                     <div className="mt-1 text-xs text-slate-400">
@@ -396,14 +654,21 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-                    <ArrowUpRight size={14} />
-                    1,4%
+                  <div className="text-xs font-semibold text-slate-500">
+                    {paymentsLast24Hours.length} opérations
                   </div>
                 </div>
 
                 <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#f0ede6]">
-                  <div className="h-full w-[96.7%] rounded-full bg-[#c8a24a]" />
+                  <div
+                    className="h-full rounded-full bg-[#c8a24a] transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(0, successRateLast24Hours),
+                      )}%`,
+                    }}
+                  />
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -413,7 +678,7 @@ export default function Home() {
                     </div>
 
                     <div className="mt-1 text-sm font-semibold text-slate-800">
-                      45
+                      {successfulLast24Hours}
                     </div>
                   </div>
 
@@ -423,8 +688,11 @@ export default function Home() {
                     </div>
 
                     <div className="mt-1 flex items-center gap-1 text-sm font-semibold text-slate-800">
-                      2
-                      <ArrowDownRight size={13} className="text-rose-500" />
+                      {failedLast24Hours}
+
+                      {failedLast24Hours > 0 && (
+                        <ArrowDownRight size={13} className="text-rose-500" />
+                      )}
                     </div>
                   </div>
                 </div>
