@@ -52,6 +52,7 @@ const navigation = [
   {
     label: "Webhooks",
     icon: Webhook,
+    href: "/webhooks",
   },
   {
     label: "Réconciliation",
