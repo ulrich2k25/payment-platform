@@ -42,6 +42,7 @@ const navigation = [
   {
     label: "Marchands",
     icon: Building2,
+    href: "/merchants",
   },
   {
     label: "Providers",
