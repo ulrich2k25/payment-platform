@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  WalletCards,
   Webhook,
   Workflow,
 } from "lucide-react";
@@ -75,6 +76,11 @@ export function MerchantDashboardShell({
                 label: "Clés API",
                 href: "/dashboard/api-keys",
                 icon: KeyRound,
+              },
+              {
+                label: "Providers",
+                href: "/dashboard/providers",
+                icon: WalletCards,
               },
               {
                 label: "Webhooks",
