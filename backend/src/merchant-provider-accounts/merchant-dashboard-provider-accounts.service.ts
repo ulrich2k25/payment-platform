@@ -30,18 +30,35 @@ export class MerchantDashboardProviderAccountsService {
     providerAccountId: string,
     credentials: Record<string, unknown>,
   ) {
-    await this.assertBelongsToMerchant(merchantId, providerAccountId);
+    const account = await this.assertBelongsToMerchant(
+      merchantId,
+      providerAccountId,
+    );
+
+    let existingCredentials: Record<string, string> = {};
+
+    if (account.credentialsEncrypted) {
+      existingCredentials =
+        await this.merchantProviderAccountsService.getDecryptedCredentials(
+          providerAccountId,
+        );
+    }
+
+    const mergedCredentials = {
+      ...existingCredentials,
+      ...credentials,
+    };
 
     return this.merchantProviderAccountsService.updateCredentials(
       providerAccountId,
-      credentials,
+      mergedCredentials,
     );
   }
 
   private async assertBelongsToMerchant(
     merchantId: string,
     providerAccountId: string,
-  ): Promise<void> {
+  ) {
     const account = await this.prisma.merchantProviderAccount.findFirst({
       where: {
         id: providerAccountId,
@@ -49,11 +66,14 @@ export class MerchantDashboardProviderAccountsService {
       },
       select: {
         id: true,
+        credentialsEncrypted: true,
       },
     });
 
     if (!account) {
       throw new NotFoundException('Merchant provider account not found');
     }
+
+    return account;
   }
 }

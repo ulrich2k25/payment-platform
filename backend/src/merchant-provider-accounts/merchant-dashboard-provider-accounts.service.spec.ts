@@ -21,6 +21,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
     findAllForMerchant: jest.Mock;
     update: jest.Mock;
     updateCredentials: jest.Mock;
+    getDecryptedCredentials: jest.Mock;
   };
 
   beforeEach(() => {
@@ -34,6 +35,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
       findAllForMerchant: jest.fn(),
       update: jest.fn(),
       updateCredentials: jest.fn(),
+      getDecryptedCredentials: jest.fn(),
     };
 
     service = new MerchantDashboardProviderAccountsService(
@@ -63,6 +65,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
   it('updates a provider account belonging to the merchant', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
+      credentialsEncrypted: null,
     });
 
     providerAccountsService.update.mockResolvedValue({
@@ -81,6 +84,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
       },
       select: {
         id: true,
+        credentialsEncrypted: true,
       },
     });
 
@@ -106,9 +110,10 @@ describe('MerchantDashboardProviderAccountsService', () => {
     expect(providerAccountsService.update).not.toHaveBeenCalled();
   });
 
-  it('updates credentials only for an owned provider account', async () => {
+  it('stores credentials for an account without existing credentials', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
+      credentialsEncrypted: null,
     });
 
     providerAccountsService.updateCredentials.mockResolvedValue({
@@ -116,10 +121,14 @@ describe('MerchantDashboardProviderAccountsService', () => {
       credentialsConfigured: true,
     });
 
-    const result = await service.updateCredentials('merchant-1', 'account-1', {
+    await service.updateCredentials('merchant-1', 'account-1', {
       apiuser: 'test-user',
       apikey: 'test-key',
     });
+
+    expect(
+      providerAccountsService.getDecryptedCredentials,
+    ).not.toHaveBeenCalled();
 
     expect(providerAccountsService.updateCredentials).toHaveBeenCalledWith(
       'account-1',
@@ -128,10 +137,40 @@ describe('MerchantDashboardProviderAccountsService', () => {
         apikey: 'test-key',
       },
     );
+  });
 
-    expect(result).toEqual({
+  it('preserves existing credentials during a partial update', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      credentialsEncrypted: 'encrypted-value',
+    });
+
+    providerAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'existing-user',
+      apikey: 'existing-key',
+      webhooksecret: 'existing-webhook-secret',
+    });
+
+    providerAccountsService.updateCredentials.mockResolvedValue({
       id: 'account-1',
       credentialsConfigured: true,
     });
+
+    await service.updateCredentials('merchant-1', 'account-1', {
+      apikey: 'new-key',
+    });
+
+    expect(
+      providerAccountsService.getDecryptedCredentials,
+    ).toHaveBeenCalledWith('account-1');
+
+    expect(providerAccountsService.updateCredentials).toHaveBeenCalledWith(
+      'account-1',
+      {
+        apiuser: 'existing-user',
+        apikey: 'new-key',
+        webhooksecret: 'existing-webhook-secret',
+      },
+    );
   });
 });
