@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
+
 import { ApiKeyStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -15,6 +16,9 @@ export class ApiKeysService {
     const merchant = await this.prisma.merchant.findUnique({
       where: {
         id: merchantId,
+      },
+      select: {
+        id: true,
       },
     });
 
@@ -35,7 +39,12 @@ export class ApiKeysService {
 
     return {
       id: apiKey.id,
+
+      // Important:
+      // this plaintext value is returned only
+      // immediately after creation.
       key,
+
       merchantId: apiKey.merchantId,
       status: apiKey.status,
       createdAt: apiKey.createdAt,
@@ -89,6 +98,29 @@ export class ApiKeysService {
       throw new ConflictException('API key is already revoked');
     }
 
+    return this.revokeApiKey(apiKey.id);
+  }
+
+  async revokeForMerchant(merchantId: string, apiKeyId: string) {
+    const apiKey = await this.prisma.apiKey.findFirst({
+      where: {
+        id: apiKeyId,
+        merchantId,
+      },
+    });
+
+    if (!apiKey) {
+      throw new NotFoundException('API key not found');
+    }
+
+    if (apiKey.status === ApiKeyStatus.REVOKED) {
+      throw new ConflictException('API key is already revoked');
+    }
+
+    return this.revokeApiKey(apiKey.id);
+  }
+
+  private revokeApiKey(apiKeyId: string) {
     return this.prisma.apiKey.update({
       where: {
         id: apiKeyId,
