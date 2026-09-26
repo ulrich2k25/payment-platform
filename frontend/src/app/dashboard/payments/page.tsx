@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   CircleCheckBig,
   CircleX,
   Clock3,
@@ -238,15 +239,22 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[980px]">
               <thead>
                 <tr className="border-b border-[#ece8df] bg-[#faf9f6] text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   <th className="px-6 py-3">Référence</th>
+
                   <th className="px-4 py-3">Montant</th>
+
                   <th className="px-4 py-3">Provider</th>
+
                   <th className="px-4 py-3">Méthode</th>
+
                   <th className="px-4 py-3">Statut</th>
-                  <th className="px-6 py-3">Date</th>
+
+                  <th className="px-4 py-3">Date</th>
+
+                  <th className="px-6 py-3 text-right">Détail</th>
                 </tr>
               </thead>
 
@@ -259,16 +267,21 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                   return (
                     <tr
                       key={payment.id}
-                      className="transition hover:bg-[#faf9f6]"
+                      className="group transition hover:bg-[#faf9f6]"
                     >
                       <td className="px-6 py-4">
-                        <div className="font-medium text-[#0a0e17]">
-                          {payment.reference}
-                        </div>
+                        <Link
+                          href={`/dashboard/payments/${payment.id}`}
+                          className="block"
+                        >
+                          <div className="font-medium text-[#0a0e17] transition group-hover:text-[#9a7523]">
+                            {payment.reference}
+                          </div>
 
-                        <code className="mt-1 block max-w-[190px] truncate text-[10px] text-slate-400">
-                          {payment.id}
-                        </code>
+                          <code className="mt-1 block max-w-[190px] truncate text-[10px] text-slate-400">
+                            {payment.id}
+                          </code>
+                        </Link>
                       </td>
 
                       <td className="px-4 py-4 text-sm font-semibold text-[#0a0e17]">
@@ -288,13 +301,22 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${status.badge}`}
                         >
                           <StatusIcon size={12} />
-
                           {payment.status}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-xs text-slate-500">
+                      <td className="px-4 py-4 text-xs text-slate-500">
                         {formatDate(payment.createdAt)}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/dashboard/payments/${payment.id}`}
+                          aria-label={`Voir le paiement ${payment.reference}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd7cb] text-slate-500 transition hover:border-[#c9b06d] hover:bg-[#f7f6f2] hover:text-[#9a7523]"
+                        >
+                          <ArrowUpRight size={15} />
+                        </Link>
                       </td>
                     </tr>
                   );
