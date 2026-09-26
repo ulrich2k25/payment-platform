@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { RunReconciliationButton } from "./run-reconciliation-button";
 
 export const dynamic = "force-dynamic";
 
@@ -254,15 +255,19 @@ export default async function ReconciliationPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#e3dfd5] bg-white px-4 py-3 shadow-sm">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Automatisation
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="rounded-xl border border-[#e3dfd5] bg-white px-4 py-3 shadow-sm">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                Automatisation
+              </div>
+
+              <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <RefreshCcw size={15} className="text-[#a67c20]" />
+                Toutes les 5 minutes
+              </div>
             </div>
 
-            <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
-              <RefreshCcw size={15} className="text-[#a67c20]" />
-              Toutes les 5 minutes
-            </div>
+            <RunReconciliationButton />
           </div>
         </section>
 
