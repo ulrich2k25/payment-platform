@@ -15,6 +15,7 @@ import { ProvidersModule } from './providers/providers.module';
 import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { MerchantAuthModule } from './merchant-auth/merchant-auth.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ReconciliationModule,
     ProviderCallbacksModule,
     MerchantProviderAccountsModule,
+    MerchantAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

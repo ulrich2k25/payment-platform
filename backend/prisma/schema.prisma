@@ -67,6 +67,18 @@ enum AdminUserStatus {
   DISABLED
 }
 
+enum MerchantUserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum MerchantUserRole {
+  OWNER
+  ADMIN
+  DEVELOPER
+  VIEWER
+}
+
 model Merchant {
   id            String         @id @default(cuid())
   name          String
@@ -81,6 +93,7 @@ model Merchant {
   payments          Payment[]
   webhookDeliveries WebhookDelivery[]
   providerAccounts  MerchantProviderAccount[]
+  users             MerchantUser[]
 }
 
 model MerchantProviderAccount {
@@ -218,5 +231,39 @@ model AdminSession {
   adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 
   @@index([adminUserId, expiresAt])
+  @@index([expiresAt, revokedAt])
+}
+
+model MerchantUser {
+  id           String             @id @default(cuid())
+  merchantId   String
+  email        String             @unique
+  passwordHash String
+  role         MerchantUserRole   @default(OWNER)
+  status       MerchantUserStatus @default(ACTIVE)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  merchant Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  sessions MerchantSession[]
+
+  @@index([merchantId, status])
+}
+
+model MerchantSession {
+  id             String   @id @default(cuid())
+  merchantUserId String
+  tokenHash      String   @unique
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  merchantUser MerchantUser @relation(fields: [merchantUserId], references: [id], onDelete: Cascade)
+
+  @@index([merchantUserId, expiresAt])
   @@index([expiresAt, revokedAt])
 }
