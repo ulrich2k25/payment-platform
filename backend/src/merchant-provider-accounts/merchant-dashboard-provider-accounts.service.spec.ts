@@ -2,8 +2,9 @@ jest.mock('@nestjs/config', () => ({
   ConfigService: class ConfigService {},
 }));
 
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
+import { MerchantProviderAccountStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MerchantDashboardProviderAccountsService } from './merchant-dashboard-provider-accounts.service';
 import { MerchantProviderAccountsService } from './merchant-provider-accounts.service';
@@ -62,19 +63,20 @@ describe('MerchantDashboardProviderAccountsService', () => {
     expect(result).toHaveLength(1);
   });
 
-  it('updates a provider account belonging to the merchant', async () => {
+  it('updates safe routing fields for a provider account belonging to the merchant', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
-      credentialsEncrypted: null,
+      provider: 'FAPSHI',
+      credentialsEncrypted: 'encrypted-value',
     });
 
     providerAccountsService.update.mockResolvedValue({
       id: 'account-1',
-      status: 'ACTIVE',
+      priority: 20,
     });
 
     const result = await service.update('merchant-1', 'account-1', {
-      status: 'ACTIVE' as never,
+      priority: 20,
     });
 
     expect(prisma.merchantProviderAccount.findFirst).toHaveBeenCalledWith({
@@ -84,18 +86,96 @@ describe('MerchantDashboardProviderAccountsService', () => {
       },
       select: {
         id: true,
+        provider: true,
         credentialsEncrypted: true,
       },
     });
 
     expect(providerAccountsService.update).toHaveBeenCalledWith('account-1', {
-      status: 'ACTIVE',
+      priority: 20,
     });
 
     expect(result).toEqual({
       id: 'account-1',
-      status: 'ACTIVE',
+      priority: 20,
     });
+  });
+
+  it('activates FAPSHI when all required credentials are configured', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      provider: 'FAPSHI',
+      credentialsEncrypted: 'encrypted-value',
+    });
+
+    providerAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'test-user',
+      apikey: 'test-key',
+      webhooksecret: 'test-webhook-secret',
+    });
+
+    providerAccountsService.update.mockResolvedValue({
+      id: 'account-1',
+      status: MerchantProviderAccountStatus.ACTIVE,
+    });
+
+    const result = await service.update('merchant-1', 'account-1', {
+      status: MerchantProviderAccountStatus.ACTIVE,
+    });
+
+    expect(
+      providerAccountsService.getDecryptedCredentials,
+    ).toHaveBeenCalledWith('account-1');
+
+    expect(providerAccountsService.update).toHaveBeenCalledWith('account-1', {
+      status: MerchantProviderAccountStatus.ACTIVE,
+    });
+
+    expect(result).toEqual({
+      id: 'account-1',
+      status: MerchantProviderAccountStatus.ACTIVE,
+    });
+  });
+
+  it('rejects FAPSHI activation when credentials are not configured', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      provider: 'FAPSHI',
+      credentialsEncrypted: null,
+    });
+
+    await expect(
+      service.update('merchant-1', 'account-1', {
+        status: MerchantProviderAccountStatus.ACTIVE,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(
+      providerAccountsService.getDecryptedCredentials,
+    ).not.toHaveBeenCalled();
+
+    expect(providerAccountsService.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects FAPSHI as default when required credentials are incomplete', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      provider: 'FAPSHI',
+      credentialsEncrypted: 'encrypted-value',
+    });
+
+    providerAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'test-user',
+      apikey: 'test-key',
+    });
+
+    await expect(
+      service.update('merchant-1', 'account-1', {
+        isDefault: true,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(providerAccountsService.update).not.toHaveBeenCalled();
   });
 
   it('rejects access to another merchant provider account', async () => {
@@ -113,6 +193,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
   it('stores credentials for an account without existing credentials', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
+      provider: 'FAPSHI',
       credentialsEncrypted: null,
     });
 
@@ -124,6 +205,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
     await service.updateCredentials('merchant-1', 'account-1', {
       apiuser: 'test-user',
       apikey: 'test-key',
+      webhooksecret: 'test-webhook-secret',
     });
 
     expect(
@@ -135,6 +217,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
       {
         apiuser: 'test-user',
         apikey: 'test-key',
+        webhooksecret: 'test-webhook-secret',
       },
     );
   });
@@ -142,6 +225,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
   it('preserves existing credentials during a partial update', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
+      provider: 'FAPSHI',
       credentialsEncrypted: 'encrypted-value',
     });
 

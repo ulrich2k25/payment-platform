@@ -12,7 +12,7 @@ import {
 
 import { MerchantUserRole } from '../../generated/prisma/client';
 import { MerchantSessionGuard } from '../merchant-auth/merchant-session.guard';
-import { UpdateMerchantProviderAccountDto } from './dto/update-merchant-provider-account.dto';
+import { UpdateMerchantDashboardProviderAccountDto } from './dto/update-merchant-dashboard-provider-account.dto';
 import { UpdateProviderCredentialsDto } from './dto/update-provider-credentials.dto';
 import { MerchantDashboardProviderAccountsService } from './merchant-dashboard-provider-accounts.service';
 
@@ -43,7 +43,7 @@ export class MerchantDashboardProviderAccountsController {
   update(
     @Req() request: MerchantRequest,
     @Param('id') id: string,
-    @Body() body: UpdateMerchantProviderAccountDto,
+    @Body() body: UpdateMerchantDashboardProviderAccountDto,
   ) {
     this.assertCanManage(request);
 
