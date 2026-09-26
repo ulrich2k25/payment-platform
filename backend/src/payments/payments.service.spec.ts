@@ -2,6 +2,8 @@ jest.mock('@nestjs/config', () => ({
   ConfigService: class ConfigService {},
 }));
 
+import { NotFoundException } from '@nestjs/common';
+
 import {
   MerchantProviderAccountStatus,
   PaymentMethod,
@@ -45,6 +47,7 @@ describe('PaymentsService', () => {
 
       payment: {
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
       },
@@ -57,15 +60,13 @@ describe('PaymentsService', () => {
       $transaction: jest.fn(),
     };
 
-    prisma.$transaction.mockImplementation(
-      async (input: any) => {
-        if (typeof input === 'function') {
-          return input(prisma);
-        }
+    prisma.$transaction.mockImplementation(async (input: any) => {
+      if (typeof input === 'function') {
+        return input(prisma);
+      }
 
-        return Promise.all(input);
-      },
-    );
+      return Promise.all(input);
+    });
 
     webhooksService = {
       sendPaymentCompleted: jest.fn(),
@@ -98,9 +99,7 @@ describe('PaymentsService', () => {
       name: 'Test Merchant',
     });
 
-    prisma.merchantProviderAccount.findFirst.mockResolvedValue(
-      null,
-    );
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue(null);
 
     const createdPayment = {
       id: 'payment-1',
@@ -123,13 +122,9 @@ describe('PaymentsService', () => {
       status: TransactionStatus.PENDING,
     };
 
-    prisma.payment.create.mockResolvedValue(
-      createdPayment,
-    );
+    prisma.payment.create.mockResolvedValue(createdPayment);
 
-    prisma.transaction.create.mockResolvedValue(
-      createdTransaction,
-    );
+    prisma.transaction.create.mockResolvedValue(createdTransaction);
 
     provider.createPayment.mockResolvedValue({
       providerReference: 'sandbox-payment-1',
@@ -156,13 +151,10 @@ describe('PaymentsService', () => {
       '670000000',
     );
 
-    expect(
-      prisma.merchantProviderAccount.findFirst,
-    ).toHaveBeenCalledWith({
+    expect(prisma.merchantProviderAccount.findFirst).toHaveBeenCalledWith({
       where: {
         merchantId: 'merchant-1',
-        status:
-          MerchantProviderAccountStatus.ACTIVE,
+        status: MerchantProviderAccountStatus.ACTIVE,
       },
       orderBy: [
         {
@@ -177,15 +169,11 @@ describe('PaymentsService', () => {
       ],
     });
 
-    expect(
-      providersService.getProvider,
-    ).toHaveBeenCalledWith(
+    expect(providersService.getProvider).toHaveBeenCalledWith(
       PaymentProvider.SANDBOX,
     );
 
-    expect(
-      prisma.transaction.create,
-    ).toHaveBeenCalledWith({
+    expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: {
         paymentId: 'payment-1',
         provider: PaymentProvider.SANDBOX,
@@ -199,9 +187,7 @@ describe('PaymentsService', () => {
       merchantProviderAccountsService.getDecryptedCredentials,
     ).not.toHaveBeenCalled();
 
-    expect(result.provider).toBe(
-      PaymentProvider.SANDBOX,
-    );
+    expect(result.provider).toBe(PaymentProvider.SANDBOX);
   });
 
   it('uses the active FAPSHI provider account and passes decrypted credentials only to the provider', async () => {
@@ -214,8 +200,7 @@ describe('PaymentsService', () => {
       id: 'fapshi-account-1',
       merchantId: 'merchant-1',
       provider: 'FAPSHI',
-      status:
-        MerchantProviderAccountStatus.ACTIVE,
+      status: MerchantProviderAccountStatus.ACTIVE,
       isDefault: true,
       priority: 10,
     };
@@ -224,12 +209,10 @@ describe('PaymentsService', () => {
       providerAccount,
     );
 
-    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue(
-      {
-        apiuser: 'sandbox-user',
-        apikey: 'sandbox-secret',
-      },
-    );
+    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'sandbox-user',
+      apikey: 'sandbox-secret',
+    });
 
     const createdPayment = {
       id: 'payment-2',
@@ -246,20 +229,15 @@ describe('PaymentsService', () => {
       id: 'transaction-2',
       paymentId: 'payment-2',
       provider: PaymentProvider.FAPSHI,
-      providerAccountId:
-        'fapshi-account-1',
+      providerAccountId: 'fapshi-account-1',
       amount: 1000,
       currency: 'XAF',
       status: TransactionStatus.PENDING,
     };
 
-    prisma.payment.create.mockResolvedValue(
-      createdPayment,
-    );
+    prisma.payment.create.mockResolvedValue(createdPayment);
 
-    prisma.transaction.create.mockResolvedValue(
-      createdTransaction,
-    );
+    prisma.transaction.create.mockResolvedValue(createdTransaction);
 
     provider.createPayment.mockResolvedValue({
       providerReference: 'fapshi-trans-123',
@@ -289,39 +267,27 @@ describe('PaymentsService', () => {
 
     expect(
       merchantProviderAccountsService.findActiveAccount,
-    ).toHaveBeenCalledWith(
-      'merchant-1',
-      PaymentProvider.FAPSHI,
-    );
+    ).toHaveBeenCalledWith('merchant-1', PaymentProvider.FAPSHI);
 
     expect(
       merchantProviderAccountsService.getDecryptedCredentials,
-    ).toHaveBeenCalledWith(
-      'fapshi-account-1',
-    );
+    ).toHaveBeenCalledWith('fapshi-account-1');
 
-    expect(
-      providersService.getProvider,
-    ).toHaveBeenCalledWith(
+    expect(providersService.getProvider).toHaveBeenCalledWith(
       PaymentProvider.FAPSHI,
     );
 
-    expect(
-      prisma.transaction.create,
-    ).toHaveBeenCalledWith({
+    expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: {
         paymentId: 'payment-2',
         provider: PaymentProvider.FAPSHI,
-        providerAccountId:
-          'fapshi-account-1',
+        providerAccountId: 'fapshi-account-1',
         amount: 1000,
         currency: 'XAF',
       },
     });
 
-    expect(
-      provider.createPayment,
-    ).toHaveBeenCalledWith({
+    expect(provider.createPayment).toHaveBeenCalledWith({
       paymentId: 'payment-2',
       merchantId: 'merchant-1',
       amount: 1000,
@@ -336,9 +302,7 @@ describe('PaymentsService', () => {
       },
     });
 
-    expect(result.provider).toBe(
-      PaymentProvider.FAPSHI,
-    );
+    expect(result.provider).toBe(PaymentProvider.FAPSHI);
   });
 
   it('automatically selects the active default FAPSHI account when no provider is explicitly requested', async () => {
@@ -347,24 +311,19 @@ describe('PaymentsService', () => {
       name: 'Ubiza',
     });
 
-    prisma.merchantProviderAccount.findFirst.mockResolvedValue(
-      {
-        id: 'fapshi-account-1',
-        merchantId: 'merchant-1',
-        provider: 'FAPSHI',
-        status:
-          MerchantProviderAccountStatus.ACTIVE,
-        isDefault: true,
-        priority: 10,
-      },
-    );
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'fapshi-account-1',
+      merchantId: 'merchant-1',
+      provider: 'FAPSHI',
+      status: MerchantProviderAccountStatus.ACTIVE,
+      isDefault: true,
+      priority: 10,
+    });
 
-    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue(
-      {
-        apiuser: 'sandbox-user',
-        apikey: 'sandbox-secret',
-      },
-    );
+    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'sandbox-user',
+      apikey: 'sandbox-secret',
+    });
 
     const createdPayment = {
       id: 'payment-3',
@@ -381,20 +340,15 @@ describe('PaymentsService', () => {
       id: 'transaction-3',
       paymentId: 'payment-3',
       provider: PaymentProvider.FAPSHI,
-      providerAccountId:
-        'fapshi-account-1',
+      providerAccountId: 'fapshi-account-1',
       amount: 1500,
       currency: 'XAF',
       status: TransactionStatus.PENDING,
     };
 
-    prisma.payment.create.mockResolvedValue(
-      createdPayment,
-    );
+    prisma.payment.create.mockResolvedValue(createdPayment);
 
-    prisma.transaction.create.mockResolvedValue(
-      createdTransaction,
-    );
+    prisma.transaction.create.mockResolvedValue(createdTransaction);
 
     provider.createPayment.mockResolvedValue({
       providerReference: 'fapshi-trans-456',
@@ -421,41 +375,110 @@ describe('PaymentsService', () => {
       '670000000',
     );
 
-    expect(
-      prisma.merchantProviderAccount.findFirst,
-    ).toHaveBeenCalled();
+    expect(prisma.merchantProviderAccount.findFirst).toHaveBeenCalled();
 
     expect(
       merchantProviderAccountsService.getDecryptedCredentials,
-    ).toHaveBeenCalledWith(
-      'fapshi-account-1',
-    );
+    ).toHaveBeenCalledWith('fapshi-account-1');
 
     expect(
       merchantProviderAccountsService.findActiveAccount,
     ).not.toHaveBeenCalled();
 
-    expect(
-      providersService.getProvider,
-    ).toHaveBeenCalledWith(
+    expect(providersService.getProvider).toHaveBeenCalledWith(
       PaymentProvider.FAPSHI,
     );
 
-    expect(
-      prisma.transaction.create,
-    ).toHaveBeenCalledWith({
+    expect(prisma.transaction.create).toHaveBeenCalledWith({
       data: {
         paymentId: 'payment-3',
         provider: PaymentProvider.FAPSHI,
-        providerAccountId:
-          'fapshi-account-1',
+        providerAccountId: 'fapshi-account-1',
         amount: 1500,
         currency: 'XAF',
       },
     });
 
-    expect(result.provider).toBe(
-      PaymentProvider.FAPSHI,
-    );
+    expect(result.provider).toBe(PaymentProvider.FAPSHI);
+  });
+
+  it('returns a merchant payment with its associated transactions', async () => {
+    const payment = {
+      id: 'payment-detail-1',
+      merchantId: 'merchant-1',
+      amount: 2500,
+      currency: 'XAF',
+      method: PaymentMethod.MOBILE_MONEY,
+      provider: PaymentProvider.FAPSHI,
+      reference: 'ORDER-DETAIL-001',
+      providerReference: 'provider-ref-001',
+      status: PaymentStatus.COMPLETED,
+      createdAt: new Date('2026-09-26T10:00:00.000Z'),
+      updatedAt: new Date('2026-09-26T10:05:00.000Z'),
+      transactions: [
+        {
+          id: 'transaction-detail-1',
+          paymentId: 'payment-detail-1',
+          provider: PaymentProvider.FAPSHI,
+          providerAccountId: 'fapshi-account-1',
+          providerReference: 'provider-ref-001',
+          status: TransactionStatus.COMPLETED,
+          amount: 2500,
+          currency: 'XAF',
+          createdAt: new Date('2026-09-26T10:00:00.000Z'),
+          updatedAt: new Date('2026-09-26T10:05:00.000Z'),
+        },
+      ],
+    };
+
+    prisma.payment.findFirst.mockResolvedValue(payment);
+
+    const result = await service.findOne('merchant-1', 'payment-detail-1');
+
+    expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'payment-detail-1',
+        merchantId: 'merchant-1',
+      },
+      include: {
+        transactions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    expect(result).toEqual(payment);
+  });
+
+  it('does not return a payment that belongs to another merchant', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.findOne('merchant-1', 'payment-owned-by-merchant-2'),
+    ).rejects.toThrow('Payment not found');
+
+    expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'payment-owned-by-merchant-2',
+        merchantId: 'merchant-1',
+      },
+      include: {
+        transactions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+  });
+
+  it('throws NotFoundException when the payment does not exist', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.findOne('merchant-1', 'missing-payment'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
