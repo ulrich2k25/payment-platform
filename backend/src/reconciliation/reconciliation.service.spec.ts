@@ -12,6 +12,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProvidersService } from '../providers/providers.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { ReconciliationService } from './reconciliation.service';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 describe('ReconciliationService', () => {
   let service: ReconciliationService;
@@ -46,16 +52,12 @@ describe('ReconciliationService', () => {
       $transaction: jest.fn(),
     };
 
-    prisma.$transaction.mockImplementation(
-      async (callback: any) => {
-        return callback(prisma);
-      },
-    );
+    prisma.$transaction.mockImplementation(async (callback: any) => {
+      return callback(prisma);
+    });
 
     providersService = {
-      getProvider: jest
-        .fn()
-        .mockReturnValue(provider),
+      getProvider: jest.fn().mockReturnValue(provider),
     };
 
     webhooksService = {
@@ -63,8 +65,7 @@ describe('ReconciliationService', () => {
     };
 
     merchantProviderAccountsService = {
-      getDecryptedCredentials:
-        jest.fn(),
+      getDecryptedCredentials: jest.fn(),
     };
 
     service = new ReconciliationService(
@@ -83,56 +84,43 @@ describe('ReconciliationService', () => {
     const payment = {
       id: 'payment-1',
       merchantId: 'merchant-1',
-      provider:
-        PaymentProvider.FAPSHI,
+      provider: PaymentProvider.FAPSHI,
       amount: 1000,
       currency: 'XAF',
       reference: 'ORDER-001',
-      status:
-        PaymentStatus.REQUIRES_RECONCILIATION,
+      status: PaymentStatus.REQUIRES_RECONCILIATION,
 
       merchant: {
         id: 'merchant-1',
-        webhookUrl:
-          'https://merchant.example/webhook',
+        webhookUrl: 'https://merchant.example/webhook',
       },
 
       transactions: [
         {
           id: 'transaction-1',
-          provider:
-            PaymentProvider.FAPSHI,
-          providerAccountId:
-            'fapshi-account-1',
-          providerReference:
-            'fapshi-trans-123',
-          status:
-            TransactionStatus.REQUIRES_RECONCILIATION,
+          provider: PaymentProvider.FAPSHI,
+          providerAccountId: 'fapshi-account-1',
+          providerReference: 'fapshi-trans-123',
+          status: TransactionStatus.REQUIRES_RECONCILIATION,
           createdAt: new Date(),
         },
       ],
     };
 
-    prisma.payment.findFirst.mockResolvedValue(
-      payment,
-    );
+    prisma.payment.findFirst.mockResolvedValue(payment);
 
-    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue(
-      {
-        apiuser: 'sandbox-user',
-        apikey: 'sandbox-secret',
-      },
-    );
+    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'sandbox-user',
+      apikey: 'sandbox-secret',
+    });
 
     provider.getPaymentStatus.mockResolvedValue({
-      status:
-        TransactionStatus.COMPLETED,
+      status: TransactionStatus.COMPLETED,
     });
 
     prisma.transaction.update.mockResolvedValue({
       ...payment.transactions[0],
-      status:
-        TransactionStatus.COMPLETED,
+      status: TransactionStatus.COMPLETED,
     });
 
     prisma.payment.update.mockResolvedValue({
@@ -140,45 +128,30 @@ describe('ReconciliationService', () => {
       status: PaymentStatus.COMPLETED,
     });
 
-    const result =
-      await service.reconcilePayment(
-        'merchant-1',
-        'payment-1',
-      );
+    const result = await service.reconcilePayment('merchant-1', 'payment-1');
 
     expect(
-      merchantProviderAccountsService
-        .getDecryptedCredentials,
-    ).toHaveBeenCalledWith(
-      'fapshi-account-1',
-    );
+      merchantProviderAccountsService.getDecryptedCredentials,
+    ).toHaveBeenCalledWith('fapshi-account-1');
 
-    expect(
-      provider.getPaymentStatus,
-    ).toHaveBeenCalledWith({
-      providerReference:
-        'fapshi-trans-123',
+    expect(provider.getPaymentStatus).toHaveBeenCalledWith({
+      providerReference: 'fapshi-trans-123',
       providerCredentials: {
         apiuser: 'sandbox-user',
         apikey: 'sandbox-secret',
       },
     });
 
-    expect(result.status).toBe(
-      PaymentStatus.COMPLETED,
-    );
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
 
-    expect(
-      webhooksService.sendPaymentCompleted,
-    ).toHaveBeenCalledTimes(1);
+    expect(webhooksService.sendPaymentCompleted).toHaveBeenCalledTimes(1);
   });
 
   it('polls a normal PENDING FAPSHI payment and completes it', async () => {
     const payment = {
       id: 'payment-2',
       merchantId: 'merchant-1',
-      provider:
-        PaymentProvider.FAPSHI,
+      provider: PaymentProvider.FAPSHI,
       amount: 100,
       currency: 'XAF',
       reference: 'ORDER-002',
@@ -192,89 +165,63 @@ describe('ReconciliationService', () => {
       transactions: [
         {
           id: 'transaction-2',
-          provider:
-            PaymentProvider.FAPSHI,
-          providerAccountId:
-            'fapshi-account-1',
-          providerReference:
-            'fapshi-trans-456',
-          status:
-            TransactionStatus.PENDING,
+          provider: PaymentProvider.FAPSHI,
+          providerAccountId: 'fapshi-account-1',
+          providerReference: 'fapshi-trans-456',
+          status: TransactionStatus.PENDING,
           createdAt: new Date(),
         },
       ],
     };
 
-    prisma.payment.findFirst.mockResolvedValue(
-      payment,
-    );
+    prisma.payment.findFirst.mockResolvedValue(payment);
 
-    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue(
-      {
-        apiuser: 'sandbox-user',
-        apikey: 'sandbox-secret',
-      },
-    );
-
-    provider.getPaymentStatus.mockResolvedValue({
-      status:
-        TransactionStatus.COMPLETED,
+    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'sandbox-user',
+      apikey: 'sandbox-secret',
     });
 
-    prisma.transaction.update.mockResolvedValue(
-      {},
-    );
+    provider.getPaymentStatus.mockResolvedValue({
+      status: TransactionStatus.COMPLETED,
+    });
+
+    prisma.transaction.update.mockResolvedValue({});
 
     prisma.payment.update.mockResolvedValue({
       ...payment,
       status: PaymentStatus.COMPLETED,
     });
 
-    const result =
-      await service.reconcilePayment(
-        'merchant-1',
-        'payment-2',
-      );
+    const result = await service.reconcilePayment('merchant-1', 'payment-2');
 
-    expect(
-      provider.getPaymentStatus,
-    ).toHaveBeenCalledTimes(1);
+    expect(provider.getPaymentStatus).toHaveBeenCalledTimes(1);
 
-    expect(
-      prisma.transaction.update,
-    ).toHaveBeenCalledWith({
+    expect(prisma.transaction.update).toHaveBeenCalledWith({
       where: {
         id: 'transaction-2',
       },
       data: {
-        status:
-          TransactionStatus.COMPLETED,
+        status: TransactionStatus.COMPLETED,
       },
     });
 
-    expect(
-      prisma.payment.update,
-    ).toHaveBeenCalledWith({
+    expect(prisma.payment.update).toHaveBeenCalledWith({
       where: {
         id: 'payment-2',
       },
       data: {
-        status:
-          PaymentStatus.COMPLETED,
+        status: PaymentStatus.COMPLETED,
       },
     });
 
-    expect(result.status).toBe(
-      PaymentStatus.COMPLETED,
-    );
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
   });
 
   it('keeps a normal FAPSHI payment PENDING while Fapshi is still pending', async () => {
     const payment = {
       id: 'payment-3',
       merchantId: 'merchant-1',
-      provider:
-        PaymentProvider.FAPSHI,
+      provider: PaymentProvider.FAPSHI,
       amount: 100,
       currency: 'XAF',
       reference: 'ORDER-003',
@@ -288,78 +235,56 @@ describe('ReconciliationService', () => {
       transactions: [
         {
           id: 'transaction-3',
-          provider:
-            PaymentProvider.FAPSHI,
-          providerAccountId:
-            'fapshi-account-1',
-          providerReference:
-            'fapshi-pending',
-          status:
-            TransactionStatus.PENDING,
+          provider: PaymentProvider.FAPSHI,
+          providerAccountId: 'fapshi-account-1',
+          providerReference: 'fapshi-pending',
+          status: TransactionStatus.PENDING,
           createdAt: new Date(),
         },
       ],
     };
 
-    prisma.payment.findFirst.mockResolvedValue(
-      payment,
-    );
+    prisma.payment.findFirst.mockResolvedValue(payment);
 
-    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue(
-      {
-        apiuser: 'sandbox-user',
-        apikey: 'sandbox-secret',
-      },
-    );
-
-    provider.getPaymentStatus.mockResolvedValue({
-      status:
-        TransactionStatus.PENDING,
+    merchantProviderAccountsService.getDecryptedCredentials.mockResolvedValue({
+      apiuser: 'sandbox-user',
+      apikey: 'sandbox-secret',
     });
 
-    prisma.transaction.update.mockResolvedValue(
-      {},
-    );
+    provider.getPaymentStatus.mockResolvedValue({
+      status: TransactionStatus.PENDING,
+    });
+
+    prisma.transaction.update.mockResolvedValue({});
 
     prisma.payment.update.mockResolvedValue({
       ...payment,
       status: PaymentStatus.PENDING,
     });
 
-    const result =
-      await service.reconcilePayment(
-        'merchant-1',
-        'payment-3',
-      );
+    const result = await service.reconcilePayment('merchant-1', 'payment-3');
 
-    expect(
-      prisma.payment.update,
-    ).toHaveBeenCalledWith({
+    expect(prisma.payment.update).toHaveBeenCalledWith({
       where: {
         id: 'payment-3',
       },
       data: {
-        status:
-          PaymentStatus.PENDING,
+        status: PaymentStatus.PENDING,
       },
     });
 
-    expect(result.status).toBe(
-      PaymentStatus.PENDING,
-    );
+    expect(result.status).toBe(PaymentStatus.PENDING);
   });
 
   it('keeps REQUIRES_RECONCILIATION when the provider is still pending', async () => {
     const payment = {
       id: 'payment-4',
       merchantId: 'merchant-1',
-      provider:
-        PaymentProvider.SANDBOX,
+      provider: PaymentProvider.SANDBOX,
       amount: 1000,
       currency: 'XAF',
       reference: 'ORDER-004',
-      status:
-        PaymentStatus.REQUIRES_RECONCILIATION,
+      status: PaymentStatus.REQUIRES_RECONCILIATION,
 
       merchant: {
         id: 'merchant-1',
@@ -369,71 +294,91 @@ describe('ReconciliationService', () => {
       transactions: [
         {
           id: 'transaction-4',
-          provider:
-            PaymentProvider.SANDBOX,
+          provider: PaymentProvider.SANDBOX,
           providerAccountId: null,
-          providerReference:
-            'sandbox-pending',
-          status:
-            TransactionStatus.REQUIRES_RECONCILIATION,
+          providerReference: 'sandbox-pending',
+          status: TransactionStatus.REQUIRES_RECONCILIATION,
           createdAt: new Date(),
         },
       ],
     };
 
-    prisma.payment.findFirst.mockResolvedValue(
-      payment,
-    );
+    prisma.payment.findFirst.mockResolvedValue(payment);
 
     provider.getPaymentStatus.mockResolvedValue({
-      status:
-        TransactionStatus.PENDING,
+      status: TransactionStatus.PENDING,
     });
 
-    prisma.transaction.update.mockResolvedValue(
-      {},
-    );
+    prisma.transaction.update.mockResolvedValue({});
 
     prisma.payment.update.mockResolvedValue({
       ...payment,
-      status:
-        PaymentStatus.REQUIRES_RECONCILIATION,
+      status: PaymentStatus.REQUIRES_RECONCILIATION,
     });
 
-    const result =
-      await service.reconcilePayment(
-        'merchant-1',
-        'payment-4',
-      );
+    const result = await service.reconcilePayment('merchant-1', 'payment-4');
 
     expect(
-      merchantProviderAccountsService
-        .getDecryptedCredentials,
+      merchantProviderAccountsService.getDecryptedCredentials,
     ).not.toHaveBeenCalled();
 
-    expect(
-      prisma.payment.update,
-    ).toHaveBeenCalledWith({
+    expect(prisma.payment.update).toHaveBeenCalledWith({
       where: {
         id: 'payment-4',
       },
       data: {
-        status:
-          PaymentStatus.REQUIRES_RECONCILIATION,
+        status: PaymentStatus.REQUIRES_RECONCILIATION,
       },
     });
 
-    expect(result.status).toBe(
-      PaymentStatus.REQUIRES_RECONCILIATION,
-    );
+    expect(result.status).toBe(PaymentStatus.REQUIRES_RECONCILIATION);
   });
+  it('fails reconciliation when the transaction has no providerReference', async () => {
+    const payment = {
+      id: 'payment-missing-provider-reference',
+      merchantId: 'merchant-1',
+      provider: PaymentProvider.FAPSHI,
+      amount: 100,
+      currency: 'XAF',
+      reference: 'ORDER-MISSING-REFERENCE',
+      status: PaymentStatus.PENDING,
 
-  it('does not call Fapshi when the transaction has no providerAccountId', async () => {
+      merchant: {
+        id: 'merchant-1',
+        webhookUrl: null,
+      },
+
+      transactions: [
+        {
+          id: 'transaction-missing-provider-reference',
+          provider: PaymentProvider.FAPSHI,
+          providerAccountId: 'fapshi-account-1',
+          providerReference: null,
+          status: TransactionStatus.PENDING,
+          createdAt: new Date(),
+        },
+      ],
+    };
+
+    prisma.payment.findFirst.mockResolvedValue(payment);
+
+    await expect(
+      service.reconcilePayment('merchant-1', payment.id),
+    ).rejects.toThrow(
+      'Payment cannot be reconciled because no provider reference is available',
+    );
+
+    expect(provider.getPaymentStatus).not.toHaveBeenCalled();
+
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+
+    expect(prisma.transaction.update).not.toHaveBeenCalled();
+  });
+  it('fails reconciliation when the Fapshi transaction has no providerAccountId', async () => {
     const payment = {
       id: 'payment-5',
       merchantId: 'merchant-1',
-      provider:
-        PaymentProvider.FAPSHI,
+      provider: PaymentProvider.FAPSHI,
       amount: 1000,
       currency: 'XAF',
       reference: 'ORDER-005',
@@ -447,65 +392,48 @@ describe('ReconciliationService', () => {
       transactions: [
         {
           id: 'transaction-5',
-          provider:
-            PaymentProvider.FAPSHI,
+          provider: PaymentProvider.FAPSHI,
           providerAccountId: null,
-          providerReference:
-            'fapshi-trans-789',
-          status:
-            TransactionStatus.PENDING,
+          providerReference: 'fapshi-trans-789',
+          status: TransactionStatus.PENDING,
           createdAt: new Date(),
         },
       ],
     };
 
-    prisma.payment.findFirst.mockResolvedValue(
-      payment,
+    prisma.payment.findFirst.mockResolvedValue(payment);
+
+    await expect(
+      service.reconcilePayment('merchant-1', 'payment-5'),
+    ).rejects.toThrow(
+      'Payment cannot be reconciled because its Fapshi transaction has no provider account',
     );
 
-    const result =
-      await service.reconcilePayment(
-        'merchant-1',
-        'payment-5',
-      );
-
     expect(
-      merchantProviderAccountsService
-        .getDecryptedCredentials,
+      merchantProviderAccountsService.getDecryptedCredentials,
     ).not.toHaveBeenCalled();
 
-    expect(
-      provider.getPaymentStatus,
-    ).not.toHaveBeenCalled();
+    expect(provider.getPaymentStatus).not.toHaveBeenCalled();
 
-    expect(result).toBe(payment);
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+
+    expect(prisma.transaction.update).not.toHaveBeenCalled();
   });
-
   it('selects REQUIRES_RECONCILIATION payments and pending FAPSHI payments for automatic reconciliation', async () => {
-    prisma.payment.findMany.mockResolvedValue(
-      [],
-    );
+    prisma.payment.findMany.mockResolvedValue([]);
 
-    const result =
-      await service.reconcilePendingPayments();
+    const result = await service.reconcilePendingPayments();
 
-    expect(
-      prisma.payment.findMany,
-    ).toHaveBeenCalledWith({
+    expect(prisma.payment.findMany).toHaveBeenCalledWith({
       where: {
         OR: [
           {
-            status:
-              PaymentStatus.REQUIRES_RECONCILIATION,
+            status: PaymentStatus.REQUIRES_RECONCILIATION,
           },
           {
-            provider:
-              PaymentProvider.FAPSHI,
+            provider: PaymentProvider.FAPSHI,
             status: {
-              in: [
-                PaymentStatus.PENDING,
-                PaymentStatus.PROCESSING,
-              ],
+              in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING],
             },
           },
         ],
