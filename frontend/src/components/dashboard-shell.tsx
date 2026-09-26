@@ -27,37 +27,37 @@ const navigation = [
   {
     label: "Vue d’ensemble",
     icon: LayoutDashboard,
-    href: "/",
+    href: "/admin",
   },
   {
     label: "Paiements",
     icon: CreditCard,
-    href: "/payments",
+    href: "/admin/payments",
   },
   {
     label: "Transactions",
     icon: Activity,
-    href: "/transactions",
+    href: "/admin/transactions",
   },
   {
     label: "Marchands",
     icon: Building2,
-    href: "/merchants",
+    href: "/admin/merchants",
   },
   {
     label: "Providers",
     icon: Network,
-    href: "/providers",
+    href: "/admin/providers",
   },
   {
     label: "Webhooks",
     icon: Webhook,
-    href: "/webhooks",
+    href: "/admin/webhooks",
   },
   {
     label: "Réconciliation",
     icon: RefreshCcw,
-    href: "/reconciliation",
+    href: "/admin/reconciliation",
   },
 ];
 
@@ -286,3 +286,4 @@ export function DashboardShell({ children }: DashboardShellProps) {
     </div>
   );
 }
+

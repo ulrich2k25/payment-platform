@@ -63,7 +63,7 @@ export async function runReconciliation(): Promise<ReconciliationRunResult> {
       results: ReconciliationResultItem[];
     };
 
-    revalidatePath("/reconciliation");
+    revalidatePath("/admin/reconciliation");
 
     return {
       success: true,
@@ -82,3 +82,4 @@ export async function runReconciliation(): Promise<ReconciliationRunResult> {
     };
   }
 }
+

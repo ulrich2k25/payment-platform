@@ -358,7 +358,7 @@ export default async function Home() {
             </form>
 
             <Link
-              href="/payments"
+              href="/admin/payments"
               className="flex h-10 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-sm font-medium text-white shadow-[0_10px_24px_rgba(10,14,23,0.18)] transition hover:bg-[#151b28]"
             >
               Voir les paiements
@@ -705,3 +705,4 @@ export default async function Home() {
     </DashboardShell>
   );
 }
+

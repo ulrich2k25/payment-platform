@@ -227,7 +227,7 @@ export default async function ReconciliationPage() {
           <div>
             <div className="mb-3">
               <Link
-                href="/"
+                href="/admin"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-[#9a7523]"
               >
                 <ArrowLeft size={14} />
@@ -536,3 +536,4 @@ export default async function ReconciliationPage() {
     </DashboardShell>
   );
 }
+

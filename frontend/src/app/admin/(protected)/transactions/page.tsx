@@ -282,7 +282,7 @@ export default async function TransactionsPage({
           <div>
             <div className="mb-3 flex items-center gap-2">
               <Link
-                href="/"
+                href="/admin"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-[#9a7523]"
               >
                 <ArrowLeft size={14} />
@@ -311,7 +311,7 @@ export default async function TransactionsPage({
           </div>
 
           <Link
-            href="/payments"
+            href="/admin/payments"
             className="flex h-10 items-center gap-2 rounded-xl border border-[#ded9cd] bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#c8a24a]/50 hover:bg-[#fffdf8]"
           >
             <Link2 size={15} />
@@ -563,3 +563,4 @@ export default async function TransactionsPage({
     </DashboardShell>
   );
 }
+
