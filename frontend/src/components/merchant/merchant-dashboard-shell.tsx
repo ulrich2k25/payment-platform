@@ -6,6 +6,7 @@ import {
   LogOut,
   Settings,
   Webhook,
+  Workflow,
 } from "lucide-react";
 
 import { logoutMerchant } from "@/app/dashboard/actions";
@@ -64,6 +65,11 @@ export function MerchantDashboardShell({
                 label: "Paiements",
                 href: "/dashboard/payments",
                 icon: CreditCard,
+              },
+              {
+                label: "Transactions",
+                href: "/dashboard/transactions",
+                icon: Workflow,
               },
               {
                 label: "Clés API",
