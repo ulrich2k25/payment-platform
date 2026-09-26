@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
+import { AdminAuthModule } from './admin/auth/admin-auth.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ApiKeysModule } from './api-keys/api-keys.module';
 import { MerchantProviderAccountsModule } from './merchant-provider-accounts/merchant-provider-accounts.module';
 import { MerchantsModule } from './merchants/merchants.module';
 import { PaymentsModule } from './payments/payments.module';
@@ -24,6 +25,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ScheduleModule.forRoot(),
 
     PrismaModule,
+    AdminAuthModule,
     MerchantsModule,
     ApiKeysModule,
     PaymentsModule,
