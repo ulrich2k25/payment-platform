@@ -62,6 +62,11 @@ enum MerchantProviderAccountStatus {
   INACTIVE
 }
 
+enum AdminUserStatus {
+  ACTIVE
+  DISABLED
+}
+
 model Merchant {
   id            String         @id @default(cuid())
   name          String
@@ -185,4 +190,15 @@ model WebhookDelivery {
   @@index([status, processingStartedAt])
   @@index([merchantId, createdAt])
   @@index([paymentId])
+}
+
+model AdminUser {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  status       AdminUserStatus @default(ACTIVE)
+
+  lastLoginAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
