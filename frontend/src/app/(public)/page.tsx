@@ -1,9 +1,7 @@
-import Link from "next/link";
-import {
+﻿import {
   ArrowRight,
   CreditCard,
   RefreshCcw,
-  ShieldCheck,
   Webhook,
 } from "lucide-react";
 
@@ -12,19 +10,19 @@ const services = [
     icon: CreditCard,
     title: "Payment API",
     description:
-      "Une API unique pour connecter les moyens de paiement adaptés à vos marchés.",
+      "Une API unique pour connecter les moyens de paiement adaptÃ©s Ã  vos marchÃ©s.",
   },
   {
     icon: Webhook,
     title: "Webhooks fiables",
     description:
-      "Recevez automatiquement les événements de paiement dans votre application.",
+      "Recevez automatiquement les Ã©vÃ©nements de paiement dans votre application.",
   },
   {
     icon: RefreshCcw,
-    title: "Réconciliation",
+    title: "RÃ©conciliation",
     description:
-      "Un mécanisme de récupération vérifie les paiements lorsque les callbacks ne suffisent pas.",
+      "Un mÃ©canisme de rÃ©cupÃ©ration vÃ©rifie les paiements lorsque les callbacks ne suffisent pas.",
   },
 ];
 
@@ -42,8 +40,8 @@ export default function PublicHomePage() {
           </h1>
 
           <p className="mt-7 max-w-2xl text-base leading-8 text-slate-500 sm:text-lg">
-            Découvrez librement la plateforme. La création d’un compte devient
-            nécessaire uniquement lorsque vous souhaitez configurer et utiliser
+            DÃ©couvrez librement la plateforme. La crÃ©ation dâ€™un compte devient
+            nÃ©cessaire uniquement lorsque vous souhaitez configurer et utiliser
             nos services.
           </p>
 
@@ -52,12 +50,12 @@ export default function PublicHomePage() {
               href="#services"
               className="inline-flex items-center gap-2 rounded-xl bg-[#0a0e17] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#171d2a]"
             >
-              Découvrir les services
+              DÃ©couvrir les services
               <ArrowRight size={16} />
             </a>
 
             <div className="flex items-center px-3 text-xs text-slate-400">
-              Aucun compte nécessaire pour découvrir la plateforme
+              Aucun compte nÃ©cessaire pour dÃ©couvrir la plateforme
             </div>
           </div>
         </div>
@@ -106,7 +104,7 @@ export default function PublicHomePage() {
         <div className="rounded-[28px] bg-[#0a0e17] px-7 py-10 text-white sm:px-10 lg:px-12">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.15em] text-[#c8a24a]">
-              Bientôt
+              BientÃ´t
             </div>
 
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
@@ -114,8 +112,8 @@ export default function PublicHomePage() {
             </h2>
 
             <p className="mt-4 text-sm leading-7 text-slate-400">
-              L’espace marchand permettra de créer vos clés API, configurer vos
-              webhooks, suivre vos transactions et gérer vos providers.
+              Lâ€™espace marchand permettra de crÃ©er vos clÃ©s API, configurer vos
+              webhooks, suivre vos transactions et gÃ©rer vos providers.
             </p>
           </div>
         </div>
@@ -123,3 +121,4 @@ export default function PublicHomePage() {
     </main>
   );
 }
+
