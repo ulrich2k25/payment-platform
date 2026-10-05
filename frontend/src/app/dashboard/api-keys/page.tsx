@@ -75,7 +75,9 @@ async function getApiKeys(): Promise<ApiKey[]> {
 }
 
 export default async function ApiKeysPage() {
-  await requireMerchant();
+  const session = await requireMerchant();
+
+  const canManage = session.user.role !== "VIEWER";
 
   const apiKeys = await getApiKeys();
 
@@ -100,7 +102,7 @@ export default async function ApiKeysPage() {
         </p>
       </div>
 
-      <ApiKeyCreationPanel />
+      <ApiKeyCreationPanel canManage={canManage} />
 
       <section className="overflow-hidden rounded-[24px] border border-[#e3dfd5] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
         <div className="flex flex-col gap-3 border-b border-[#ece8df] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -189,7 +191,7 @@ export default async function ApiKeysPage() {
                   </div>
 
                   <div className="lg:text-right">
-                    {active ? (
+                    {active && canManage ? (
                       <form action={revokeApiKey}>
                         <input
                           type="hidden"

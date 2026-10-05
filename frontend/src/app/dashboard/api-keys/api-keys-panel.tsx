@@ -15,6 +15,10 @@ import { createApiKey, type CreateApiKeyState } from "./actions";
 
 const initialState: CreateApiKeyState = {};
 
+type ApiKeyCreationPanelProps = {
+  canManage?: boolean;
+};
+
 function CreateButton() {
   const { pending } = useFormStatus();
 
@@ -39,7 +43,9 @@ function CreateButton() {
   );
 }
 
-export function ApiKeyCreationPanel() {
+export function ApiKeyCreationPanel({
+  canManage = true,
+}: ApiKeyCreationPanelProps) {
   const [state, formAction] = useActionState(createApiKey, initialState);
 
   const [copied, setCopied] = useState(false);
@@ -74,11 +80,20 @@ export function ApiKeyCreationPanel() {
             Utilisez une clé API pour authentifier votre backend auprès de
             Payment Platform.
           </p>
+
+          {!canManage ? (
+            <p className="mt-3 text-xs leading-5 text-slate-400">
+              Accès en lecture seule. Votre rôle ne permet pas de créer ou
+              révoquer des clés API.
+            </p>
+          ) : null}
         </div>
 
-        <form action={formAction}>
-          <CreateButton />
-        </form>
+        {canManage ? (
+          <form action={formAction}>
+            <CreateButton />
+          </form>
+        ) : null}
       </div>
 
       {state.error ? (
