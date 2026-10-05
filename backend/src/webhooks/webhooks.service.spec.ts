@@ -9,7 +9,7 @@ jest.mock('node:dns/promises', () => ({
   lookup: jest.fn(),
 }));
 
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { lookup } from 'node:dns/promises';
 
@@ -274,5 +274,111 @@ describe('WebhooksService', () => {
     await expect(
       service.getMerchantDeliveryById('merchant-1', 'missing-delivery'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+  it('replays an exhausted webhook delivery owned by the merchant', async () => {
+    prismaMock.webhookDelivery.updateMany.mockResolvedValue({
+      count: 1,
+    });
+
+    const result = await service.replayMerchantExhaustedDelivery(
+      'merchant-1',
+      'delivery-1',
+    );
+
+    expect(prismaMock.webhookDelivery.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'delivery-1',
+        merchantId: 'merchant-1',
+        status: WebhookDeliveryStatus.EXHAUSTED,
+      },
+      data: {
+        status: WebhookDeliveryStatus.PENDING,
+        attemptCount: 0,
+        nextAttemptAt: expect.any(Date),
+        processingStartedAt: null,
+        replayCount: {
+          increment: 1,
+        },
+        lastReplayedAt: expect.any(Date),
+      },
+    });
+
+    expect(result).toEqual({
+      id: 'delivery-1',
+      replayed: true,
+      replayedAt: expect.any(Date),
+    });
+
+    expect(prismaMock.webhookDelivery.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('does not replay a webhook delivery owned by another merchant', async () => {
+    prismaMock.webhookDelivery.updateMany.mockResolvedValue({
+      count: 0,
+    });
+
+    prismaMock.webhookDelivery.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.replayMerchantExhaustedDelivery(
+        'merchant-1',
+        'delivery-owned-by-merchant-2',
+      ),
+    ).rejects.toThrow(
+      new NotFoundException(
+        'Webhook delivery delivery-owned-by-merchant-2 was not found',
+      ),
+    );
+
+    expect(prismaMock.webhookDelivery.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'delivery-owned-by-merchant-2',
+          merchantId: 'merchant-1',
+          status: WebhookDeliveryStatus.EXHAUSTED,
+        },
+      }),
+    );
+
+    expect(prismaMock.webhookDelivery.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'delivery-owned-by-merchant-2',
+        merchantId: 'merchant-1',
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+  });
+
+  it('rejects merchant replay when the webhook is not exhausted', async () => {
+    prismaMock.webhookDelivery.updateMany.mockResolvedValue({
+      count: 0,
+    });
+
+    prismaMock.webhookDelivery.findFirst.mockResolvedValue({
+      id: 'delivery-1',
+      status: WebhookDeliveryStatus.DELIVERED,
+    });
+
+    await expect(
+      service.replayMerchantExhaustedDelivery('merchant-1', 'delivery-1'),
+    ).rejects.toThrow(
+      new ConflictException(
+        'Webhook delivery delivery-1 cannot be replayed from status DELIVERED',
+      ),
+    );
+
+    expect(prismaMock.webhookDelivery.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'delivery-1',
+        merchantId: 'merchant-1',
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
   });
 });

@@ -109,6 +109,64 @@ export class WebhooksService {
     );
   }
 
+  async replayMerchantExhaustedDelivery(
+    merchantId: string,
+    deliveryId: string,
+  ) {
+    const now = new Date();
+
+    const result = await this.prisma.webhookDelivery.updateMany({
+      where: {
+        id: deliveryId,
+        merchantId,
+        status: WebhookDeliveryStatus.EXHAUSTED,
+      },
+      data: {
+        status: WebhookDeliveryStatus.PENDING,
+        attemptCount: 0,
+        nextAttemptAt: now,
+        processingStartedAt: null,
+        replayCount: {
+          increment: 1,
+        },
+        lastReplayedAt: now,
+      },
+    });
+
+    if (result.count === 1) {
+      this.logger.warn(
+        `Webhook ${deliveryId} manually replayed by merchant ${merchantId}`,
+      );
+
+      return {
+        id: deliveryId,
+        replayed: true,
+        replayedAt: now,
+      };
+    }
+
+    const existingDelivery = await this.prisma.webhookDelivery.findFirst({
+      where: {
+        id: deliveryId,
+        merchantId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!existingDelivery) {
+      throw new NotFoundException(
+        `Webhook delivery ${deliveryId} was not found`,
+      );
+    }
+
+    throw new ConflictException(
+      `Webhook delivery ${deliveryId} cannot be replayed from status ${existingDelivery.status}`,
+    );
+  }
+
   async listDeliveries(query: ListWebhooksQueryDto) {
     const { page, limit, status, merchantId, paymentId } = query;
 

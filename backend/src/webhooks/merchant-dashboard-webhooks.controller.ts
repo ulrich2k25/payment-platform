@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -10,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { MerchantUserRole } from '../../generated/prisma/client';
 import { MerchantSessionGuard } from '../merchant-auth/merchant-session.guard';
 import { MerchantsService } from '../merchants/merchants.service';
 import { UpdateWebhookDto } from '../merchants/dto/update-webhook.dto';
@@ -20,6 +22,9 @@ import { WebhooksService } from './webhooks.service';
 type MerchantRequest = {
   merchant: {
     id: string;
+  };
+  merchantUser: {
+    role: MerchantUserRole;
   };
 };
 
@@ -55,12 +60,21 @@ export class MerchantDashboardWebhooksController {
   @Get()
   listDeliveries(
     @Req() request: MerchantRequest,
-    @Query()
-    query: ListMerchantWebhooksQueryDto,
+    @Query() query: ListMerchantWebhooksQueryDto,
   ) {
     return this.webhooksService.listMerchantDeliveries(
       request.merchant.id,
       query,
+    );
+  }
+
+  @Post(':id/replay')
+  replayDelivery(@Req() request: MerchantRequest, @Param('id') id: string) {
+    this.assertCanManage(request);
+
+    return this.webhooksService.replayMerchantExhaustedDelivery(
+      request.merchant.id,
+      id,
     );
   }
 
@@ -70,5 +84,16 @@ export class MerchantDashboardWebhooksController {
       request.merchant.id,
       id,
     );
+  }
+
+  private assertCanManage(request: MerchantRequest): void {
+    if (
+      request.merchantUser.role !== MerchantUserRole.OWNER &&
+      request.merchantUser.role !== MerchantUserRole.ADMIN
+    ) {
+      throw new ForbiddenException(
+        'Only merchant owners and admins can replay webhook deliveries',
+      );
+    }
   }
 }
