@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   CircleCheckBig,
   CircleX,
   Clock3,
@@ -258,7 +259,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1050px]">
+            <table className="w-full min-w-[1120px]">
               <thead>
                 <tr className="border-b border-[#ece8df] bg-[#faf9f6] text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   <th className="px-6 py-3">Paiement</th>
@@ -271,7 +272,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
 
                   <th className="px-4 py-3">Statut</th>
 
-                  <th className="px-6 py-3">Date</th>
+                  <th className="px-4 py-3">Date</th>
+
+                  <th className="px-6 py-3 text-right">Détail</th>
                 </tr>
               </thead>
 
@@ -284,16 +287,21 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                   return (
                     <tr
                       key={transaction.id}
-                      className="transition hover:bg-[#faf9f6]"
+                      className="group transition hover:bg-[#faf9f6]"
                     >
                       <td className="px-6 py-4">
-                        <div className="font-medium text-[#0a0e17]">
-                          {transaction.payment.reference}
-                        </div>
+                        <Link
+                          href={`/dashboard/transactions/${transaction.id}`}
+                          className="block"
+                        >
+                          <div className="font-medium text-[#0a0e17] transition group-hover:text-[#9a7523]">
+                            {transaction.payment.reference}
+                          </div>
 
-                        <code className="mt-1 block text-[10px] text-slate-400">
-                          {shorten(transaction.paymentId)}
-                        </code>
+                          <code className="mt-1 block max-w-[190px] truncate text-[10px] text-slate-400">
+                            {transaction.id}
+                          </code>
+                        </Link>
                       </td>
 
                       <td className="px-4 py-4 text-sm font-semibold text-[#0a0e17]">
@@ -315,13 +323,22 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${status.badge}`}
                         >
                           <StatusIcon size={12} />
-
                           {transaction.status}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-xs text-slate-500">
+                      <td className="px-4 py-4 text-xs text-slate-500">
                         {formatDate(transaction.createdAt)}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/dashboard/transactions/${transaction.id}`}
+                          aria-label={`Voir la transaction ${transaction.id}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd7cb] text-slate-500 transition hover:border-[#c9b06d] hover:bg-[#f7f6f2] hover:text-[#9a7523]"
+                        >
+                          <ArrowUpRight size={15} />
+                        </Link>
                       </td>
                     </tr>
                   );
