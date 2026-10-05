@@ -83,7 +83,7 @@ function paymentStatusStyle(status: string) {
     case "FAILED":
       return {
         label: "FAILED",
-        className: "border-red-200 bg-red-50 text-red-700",
+        className: "border-rose-200 bg-rose-50 text-rose-700",
       };
 
     case "REQUIRES_RECONCILIATION":
@@ -162,27 +162,33 @@ function InfrastructureStatus({
   detail: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-          active
-            ? "bg-emerald-50 text-emerald-700"
-            : "bg-amber-50 text-amber-700"
-        }`}
-      >
-        <Icon size={16} />
-      </div>
+    <div className="flex items-center justify-between border-b border-white/[0.07] pb-4 last:border-b-0 last:pb-0">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04] text-[#e6c76d]">
+          <Icon size={16} />
+        </div>
 
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-[#0a0e17]">{label}</div>
-        <div
-          className={`mt-0.5 text-[11px] ${
-            active ? "text-emerald-700" : "text-amber-700"
-          }`}
-        >
-          {detail}
+        <div className="min-w-0">
+          <div className="text-xs font-medium text-slate-300">{label}</div>
+          <div className="mt-0.5 text-[11px] text-slate-500">{detail}</div>
         </div>
       </div>
+
+      <span
+        className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+          active
+            ? "border-emerald-400/15 bg-emerald-400/10 text-emerald-300"
+            : "border-amber-400/15 bg-amber-400/10 text-amber-300"
+        }`}
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${
+            active ? "bg-emerald-400" : "bg-amber-400"
+          }`}
+        />
+
+        {active ? "Actif" : "Attention"}
+      </span>
     </div>
   );
 }
@@ -199,58 +205,62 @@ export default async function MerchantDashboardPage() {
       : "Aucun volume";
 
   return (
-    <div className="space-y-8">
-      <div className="max-w-2xl">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9a7523]">
-          Vue d&apos;ensemble
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <section>
+        <div className="mb-2 flex items-center gap-2">
+          <span className="rounded-full border border-[#dbc47d] bg-[#fff8e7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9a7523]">
+            Vue d&apos;ensemble
+          </span>
         </div>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#0a0e17] sm:text-3xl">
           Bonjour, {session.merchant.name}
         </h1>
 
-        <p className="mt-3 text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
           Suivez l&apos;activité récente de vos paiements et les éléments qui
           nécessitent votre attention.
         </p>
-      </div>
+      </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-[22px] border border-[#e3dfd5] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.04)]">
-          <div className="text-xs font-medium text-slate-400">
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="text-sm font-medium text-slate-500">
             Paiements · 30 jours
           </div>
 
-          <div className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+          <div className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {summary.payments.count}
           </div>
 
           <p
-            className="mt-2 truncate text-xs text-slate-500"
+            className="mt-2 truncate text-xs text-slate-400"
             title={volumeLabel}
           >
             {volumeLabel}
           </p>
         </article>
 
-        <article className="rounded-[22px] border border-[#e3dfd5] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.04)]">
-          <div className="text-xs font-medium text-slate-400">
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="text-sm font-medium text-slate-500">
             Taux de réussite
           </div>
 
-          <div className="mt-3 flex items-center gap-3">
-            <div className="text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+          <div className="mt-2 flex items-center gap-3">
+            <div className="text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
               {summary.payments.successRate === null
                 ? "—"
                 : `${summary.payments.successRate}%`}
             </div>
 
             {summary.payments.successRate !== null ? (
-              <CheckCircle2 size={18} className="text-emerald-600" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <CheckCircle2 size={16} />
+              </span>
             ) : null}
           </div>
 
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-400">
             {summary.payments.finalizedCount > 0
               ? `${summary.payments.completedCount} réussis sur ${summary.payments.finalizedCount} finalisés`
               : "Aucun paiement finalisé sur la période"}
@@ -258,32 +268,33 @@ export default async function MerchantDashboardPage() {
         </article>
 
         <article
-          className={`rounded-[22px] border p-6 shadow-[0_18px_55px_rgba(15,23,42,0.04)] ${
+          className={`group rounded-2xl border p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)] ${
             summary.attention.total > 0
-              ? "border-orange-200 bg-orange-50/40"
-              : "border-[#e3dfd5] bg-white"
+              ? "border-amber-200 bg-amber-50/40"
+              : "border-[#e7e2d8] bg-white hover:border-[#c8a24a]/45"
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="text-xs font-medium text-slate-400">
+            <div className="text-sm font-medium text-slate-500">
               À surveiller
             </div>
 
-            <CircleAlert
-              size={17}
-              className={
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-xl ${
                 summary.attention.total > 0
-                  ? "text-orange-600"
-                  : "text-slate-300"
-              }
-            />
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-[#fffaf0] text-[#9a7523]"
+              }`}
+            >
+              <CircleAlert size={16} />
+            </div>
           </div>
 
-          <div className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+          <div className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {summary.attention.total}
           </div>
 
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-400">
             {summary.attention.paymentsRequiringReconciliation} rapprochement
             {summary.attention.paymentsRequiringReconciliation > 1
               ? "s"
@@ -293,19 +304,21 @@ export default async function MerchantDashboardPage() {
         </article>
       </section>
 
-      <section className="overflow-hidden rounded-[24px] border border-[#e3dfd5] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-        <div className="flex items-center justify-between border-b border-[#ece8df] px-6 py-5">
+      <section className="overflow-hidden rounded-2xl border border-[#e7e2d8] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
+        <div className="flex items-center justify-between border-b border-[#eeeae2] px-5 py-5">
           <div>
-            <h2 className="font-semibold text-[#0a0e17]">Paiements récents</h2>
+            <h2 className="text-base font-semibold tracking-tight text-[#0a0e17]">
+              Paiements récents
+            </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               Les cinq derniers paiements enregistrés
             </p>
           </div>
 
           <Link
             href="/dashboard/payments"
-            className="text-xs font-semibold text-[#9a7523] transition hover:text-[#755718]"
+            className="rounded-xl border border-[#e5e0d6] bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-[#c8a24a]/40 hover:bg-[#fffdf8]"
           >
             Voir tous
           </Link>
@@ -314,12 +327,13 @@ export default async function MerchantDashboardPage() {
         {summary.recentPayments.length === 0 ? (
           <div className="px-6 py-14 text-center">
             <p className="text-sm font-medium text-[#0a0e17]">Aucun paiement</p>
-            <p className="mt-2 text-xs text-slate-500">
+
+            <p className="mt-2 text-xs text-slate-400">
               Les prochains paiements apparaîtront ici.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-[#ece8df]">
+          <div className="divide-y divide-[#f0ede6]">
             {summary.recentPayments.map((payment) => {
               const appearance = paymentStatusStyle(payment.status);
 
@@ -327,7 +341,7 @@ export default async function MerchantDashboardPage() {
                 <Link
                   key={payment.id}
                   href={`/dashboard/payments/${payment.id}`}
-                  className="group grid gap-4 px-6 py-4 transition hover:bg-[#faf9f6] sm:grid-cols-[1.4fr_1fr_auto] sm:items-center"
+                  className="group grid gap-4 px-5 py-4 transition hover:bg-[#fdfbf6] sm:grid-cols-[1.4fr_1fr_auto] sm:items-center"
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-[#0a0e17] transition group-hover:text-[#9a7523]">
@@ -368,55 +382,58 @@ export default async function MerchantDashboardPage() {
         )}
       </section>
 
-      <section className="rounded-[22px] border border-[#e3dfd5] bg-white px-6 py-5">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-[#0a0e17]">
-              Infrastructure
-            </h2>
-            <p className="mt-1 text-xs text-slate-500">
-              État des composants nécessaires au traitement des paiements.
-            </p>
+      <section className="overflow-hidden rounded-2xl border border-[#c8a24a]/10 bg-[#0a0e17] p-6 text-white shadow-[0_16px_40px_rgba(10,14,23,0.18)]">
+        <div className="mb-6">
+          <div className="text-xs font-medium text-[#bca66f]">
+            Infrastructure
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-3 lg:min-w-[620px]">
-            <InfrastructureStatus
-              icon={ServerCog}
-              label="Provider"
-              active={summary.infrastructure.hasActiveProvider}
-              detail={
-                summary.infrastructure.hasActiveProvider
-                  ? `${summary.infrastructure.activeProviderCount} actif${
-                      summary.infrastructure.activeProviderCount > 1 ? "s" : ""
-                    }`
-                  : "Aucun provider actif"
-              }
-            />
+          <h2 className="mt-1 text-lg font-semibold tracking-tight text-white">
+            État des services
+          </h2>
 
-            <InfrastructureStatus
-              icon={KeyRound}
-              label="Clé API"
-              active={summary.infrastructure.hasActiveApiKey}
-              detail={
-                summary.infrastructure.hasActiveApiKey
-                  ? `${summary.infrastructure.activeApiKeyCount} active${
-                      summary.infrastructure.activeApiKeyCount > 1 ? "s" : ""
-                    }`
-                  : "Aucune clé active"
-              }
-            />
+          <p className="mt-1 text-xs text-slate-500">
+            État des composants nécessaires au traitement des paiements.
+          </p>
+        </div>
 
-            <InfrastructureStatus
-              icon={Webhook}
-              label="Webhook"
-              active={summary.infrastructure.webhookConfigured}
-              detail={
-                summary.infrastructure.webhookConfigured
-                  ? "Configuré"
-                  : "Non configuré"
-              }
-            />
-          </div>
+        <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
+          <InfrastructureStatus
+            icon={ServerCog}
+            label="Provider"
+            active={summary.infrastructure.hasActiveProvider}
+            detail={
+              summary.infrastructure.hasActiveProvider
+                ? `${summary.infrastructure.activeProviderCount} actif${
+                    summary.infrastructure.activeProviderCount > 1 ? "s" : ""
+                  }`
+                : "Aucun provider actif"
+            }
+          />
+
+          <InfrastructureStatus
+            icon={KeyRound}
+            label="Clé API"
+            active={summary.infrastructure.hasActiveApiKey}
+            detail={
+              summary.infrastructure.hasActiveApiKey
+                ? `${summary.infrastructure.activeApiKeyCount} active${
+                    summary.infrastructure.activeApiKeyCount > 1 ? "s" : ""
+                  }`
+                : "Aucune clé active"
+            }
+          />
+
+          <InfrastructureStatus
+            icon={Webhook}
+            label="Webhook"
+            active={summary.infrastructure.webhookConfigured}
+            detail={
+              summary.infrastructure.webhookConfigured
+                ? "Configuré"
+                : "Non configuré"
+            }
+          />
         </div>
       </section>
     </div>
