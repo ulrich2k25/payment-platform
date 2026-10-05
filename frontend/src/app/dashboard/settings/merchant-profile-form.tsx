@@ -11,6 +11,7 @@ import {
 type MerchantProfileFormProps = {
   initialName: string;
   initialEmail: string;
+  canManage: boolean;
 };
 
 const initialState: MerchantSettingsActionState = {
@@ -20,6 +21,7 @@ const initialState: MerchantSettingsActionState = {
 export function MerchantProfileForm({
   initialName,
   initialEmail,
+  canManage,
 }: MerchantProfileFormProps) {
   const [state, formAction, isPending] = useActionState(
     updateMerchantProfile,
@@ -48,7 +50,9 @@ export function MerchantProfileForm({
               minLength={2}
               maxLength={120}
               defaultValue={initialName}
-              className="h-12 w-full rounded-xl border border-[#ded8cc] bg-white pl-11 pr-4 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10"
+              readOnly={!canManage}
+              aria-readonly={!canManage}
+              className="h-12 w-full rounded-xl border border-[#ded8cc] bg-white pl-11 pr-4 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10 read-only:cursor-default read-only:bg-[#f7f6f2] read-only:text-slate-600 read-only:focus:border-[#ded8cc] read-only:focus:ring-0"
             />
           </div>
         </div>
@@ -71,7 +75,9 @@ export function MerchantProfileForm({
               required
               maxLength={320}
               defaultValue={initialEmail}
-              className="h-12 w-full rounded-xl border border-[#ded8cc] bg-white pl-11 pr-4 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10"
+              readOnly={!canManage}
+              aria-readonly={!canManage}
+              className="h-12 w-full rounded-xl border border-[#ded8cc] bg-white pl-11 pr-4 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10 read-only:cursor-default read-only:bg-[#f7f6f2] read-only:text-slate-600 read-only:focus:border-[#ded8cc] read-only:focus:ring-0"
             />
           </div>
 
@@ -80,6 +86,13 @@ export function MerchantProfileForm({
             votre adresse utilisée pour vous connecter.
           </p>
         </div>
+
+        {!canManage ? (
+          <div className="rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
+            Accès en lecture seule. Seuls les propriétaires et administrateurs
+            peuvent modifier les informations de l&apos;entreprise.
+          </div>
+        ) : null}
 
         {state.status !== "idle" && state.message ? (
           <div
@@ -97,19 +110,21 @@ export function MerchantProfileForm({
           </div>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0a0e17] px-5 text-sm font-semibold text-white transition hover:bg-[#161c29] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Save size={16} />
-          )}
+        {canManage ? (
+          <button
+            type="submit"
+            disabled={isPending}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0a0e17] px-5 text-sm font-semibold text-white transition hover:bg-[#161c29] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
 
-          {isPending ? "Enregistrement..." : "Enregistrer les modifications"}
-        </button>
+            {isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+          </button>
+        ) : null}
       </div>
     </form>
   );

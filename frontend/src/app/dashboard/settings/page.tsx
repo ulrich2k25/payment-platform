@@ -51,6 +51,9 @@ function statusLabel(status: string) {
 export default async function MerchantSettingsPage() {
   const session = await requireMerchant();
 
+  const canManage =
+    session.user.role === "OWNER" || session.user.role === "ADMIN";
+
   const accountItems = [
     {
       label: "E-mail de connexion",
@@ -124,6 +127,7 @@ export default async function MerchantSettingsPage() {
             <MerchantProfileForm
               initialName={session.merchant.name}
               initialEmail={session.merchant.email}
+              canManage={canManage}
             />
           </div>
         </section>
