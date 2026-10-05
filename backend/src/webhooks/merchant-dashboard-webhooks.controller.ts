@@ -13,8 +13,8 @@ import {
 
 import { MerchantUserRole } from '../../generated/prisma/client';
 import { MerchantSessionGuard } from '../merchant-auth/merchant-session.guard';
-import { MerchantsService } from '../merchants/merchants.service';
 import { UpdateWebhookDto } from '../merchants/dto/update-webhook.dto';
+import { MerchantsService } from '../merchants/merchants.service';
 
 import { ListMerchantWebhooksQueryDto } from './dto/list-merchant-webhooks-query.dto';
 import { WebhooksService } from './webhooks.service';
@@ -46,6 +46,8 @@ export class MerchantDashboardWebhooksController {
     @Req() request: MerchantRequest,
     @Body() body: UpdateWebhookDto,
   ) {
+    this.assertCanManage(request);
+
     return this.merchantsService.updateWebhookConfiguration(
       request.merchant.id,
       body.webhookUrl,
@@ -54,6 +56,8 @@ export class MerchantDashboardWebhooksController {
 
   @Post('secret/rotate')
   rotateSecret(@Req() request: MerchantRequest) {
+    this.assertCanManage(request);
+
     return this.merchantsService.rotateWebhookSecret(request.merchant.id);
   }
 
@@ -92,7 +96,7 @@ export class MerchantDashboardWebhooksController {
       request.merchantUser.role !== MerchantUserRole.ADMIN
     ) {
       throw new ForbiddenException(
-        'Only merchant owners and admins can replay webhook deliveries',
+        'Only merchant owners and admins can manage webhook settings and deliveries',
       );
     }
   }
