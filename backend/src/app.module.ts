@@ -16,6 +16,7 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { MerchantAuthModule } from './merchant-auth/merchant-auth.module';
+import { MerchantDashboardModule } from './merchant-dashboard/merchant-dashboard.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MerchantAuthModule } from './merchant-auth/merchant-auth.module';
     ProviderCallbacksModule,
     MerchantProviderAccountsModule,
     MerchantAuthModule,
+    MerchantDashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
