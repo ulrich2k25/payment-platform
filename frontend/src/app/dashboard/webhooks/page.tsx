@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
   CircleAlert,
   Clock3,
@@ -20,7 +21,6 @@ import { WebhookConfigPanel } from "./webhook-config-panel";
 export const dynamic = "force-dynamic";
 
 const API_URL = process.env.PAYMENT_API_URL ?? "http://localhost:3004";
-
 const MERCHANT_SESSION_COOKIE = "payment_platform_merchant_session";
 
 type WebhookConfiguration = {
@@ -288,50 +288,49 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
             </p>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Lorsqu’un paiement générera un événement, sa livraison apparaîtra
-              ici.
+              Lorsqu&apos;un paiement générera un événement, sa livraison
+              apparaîtra ici.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px]">
+            <table className="w-full min-w-[1160px]">
               <thead>
                 <tr className="border-b border-[#ece8df] bg-[#faf9f6] text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   <th className="px-6 py-3">Événement</th>
-
                   <th className="px-4 py-3">Paiement</th>
-
                   <th className="px-4 py-3">Statut</th>
-
                   <th className="px-4 py-3">Tentatives</th>
-
                   <th className="px-4 py-3">HTTP</th>
-
                   <th className="px-4 py-3">Dernière erreur</th>
-
-                  <th className="px-6 py-3">Créé</th>
+                  <th className="px-4 py-3">Créé</th>
+                  <th className="px-6 py-3 text-right">Détail</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-[#ece8df]">
                 {deliveries.data.map((delivery) => {
                   const appearance = statusStyle(delivery.status);
-
                   const StatusIcon = appearance.icon;
 
                   return (
                     <tr
                       key={delivery.id}
-                      className="transition hover:bg-[#faf9f6]"
+                      className="group transition hover:bg-[#faf9f6]"
                     >
                       <td className="px-6 py-4">
-                        <div className="font-medium text-[#0a0e17]">
-                          {delivery.event}
-                        </div>
+                        <Link
+                          href={`/dashboard/webhooks/${delivery.id}`}
+                          className="block"
+                        >
+                          <div className="font-medium text-[#0a0e17] transition group-hover:text-[#9a7523]">
+                            {delivery.event}
+                          </div>
 
-                        <code className="mt-1 block text-[10px] text-slate-400">
-                          {delivery.id}
-                        </code>
+                          <code className="mt-1 block max-w-[190px] truncate text-[10px] text-slate-400">
+                            {delivery.id}
+                          </code>
+                        </Link>
                       </td>
 
                       <td className="px-4 py-4">
@@ -349,14 +348,12 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${appearance.classes}`}
                         >
                           <StatusIcon size={12} />
-
                           {appearance.label}
                         </span>
                       </td>
 
                       <td className="px-4 py-4 text-sm text-slate-600">
-                        {delivery.attemptCount}
-                        /5
+                        {delivery.attemptCount} / 5
                       </td>
 
                       <td className="px-4 py-4">
@@ -382,8 +379,18 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-xs text-slate-500">
+                      <td className="px-4 py-4 text-xs text-slate-500">
                         {formatDate(delivery.createdAt)}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          href={`/dashboard/webhooks/${delivery.id}`}
+                          aria-label={`Voir la livraison webhook ${delivery.id}`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd7cb] text-slate-500 transition hover:border-[#c9b06d] hover:bg-[#f7f6f2] hover:text-[#9a7523]"
+                        >
+                          <ArrowUpRight size={15} />
+                        </Link>
                       </td>
                     </tr>
                   );
