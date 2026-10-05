@@ -20,6 +20,7 @@ import {
 type WebhookConfigPanelProps = {
   webhookUrl: string | null;
   webhookSecretConfigured: boolean;
+  canManage?: boolean;
 };
 
 const initialState: WebhookActionState = {
@@ -29,6 +30,7 @@ const initialState: WebhookActionState = {
 export function WebhookConfigPanel({
   webhookUrl,
   webhookSecretConfigured,
+  canManage = true,
 }: WebhookConfigPanelProps) {
   const [configurationState, configurationAction, configurationPending] =
     useActionState(updateWebhookConfiguration, initialState);
@@ -102,14 +104,22 @@ export function WebhookConfigPanel({
             required
             maxLength={500}
             defaultValue={webhookUrl ?? ""}
+            disabled={!canManage}
             placeholder="https://example.com/webhooks/payment"
-            className="mt-2 h-12 w-full rounded-xl border border-[#ddd7cb] bg-white px-4 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10"
+            className="mt-2 h-12 w-full rounded-xl border border-[#ddd7cb] bg-white px-4 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10 disabled:cursor-not-allowed disabled:bg-[#f7f6f2] disabled:text-slate-500"
           />
 
           <div className="mt-3 rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
             Utilisez une URL publique accessible depuis Internet. Les adresses
             localhost et réseaux privés sont refusées.
           </div>
+
+          {!canManage ? (
+            <div className="mt-4 rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
+              Accès en lecture seule. Seuls les propriétaires et administrateurs
+              peuvent modifier la configuration webhook.
+            </div>
+          ) : null}
 
           {configurationState.message ? (
             <div
@@ -123,19 +133,21 @@ export function WebhookConfigPanel({
             </div>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={configurationPending}
-            className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-semibold text-white transition hover:bg-[#151c2b] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {configurationPending ? (
-              <RefreshCw size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}
+          {canManage ? (
+            <button
+              type="submit"
+              disabled={configurationPending}
+              className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-semibold text-white transition hover:bg-[#151c2b] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {configurationPending ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
 
-            {configurationPending ? "Enregistrement..." : "Enregistrer"}
-          </button>
+              {configurationPending ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          ) : null}
         </form>
       </section>
 
@@ -209,28 +221,37 @@ export function WebhookConfigPanel({
           </div>
         ) : null}
 
-        <form action={rotationAction} className="mt-5">
-          <button
-            type="submit"
-            disabled={rotationPending}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-xs font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RefreshCw
-              size={13}
-              className={rotationPending ? "animate-spin" : ""}
-            />
+        {canManage ? (
+          <>
+            <form action={rotationAction} className="mt-5">
+              <button
+                type="submit"
+                disabled={rotationPending}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-xs font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw
+                  size={13}
+                  className={rotationPending ? "animate-spin" : ""}
+                />
 
-            {webhookSecretConfigured
-              ? "Régénérer le secret"
-              : "Générer un secret"}
-          </button>
-        </form>
+                {webhookSecretConfigured
+                  ? "Régénérer le secret"
+                  : "Générer un secret"}
+              </button>
+            </form>
 
-        {webhookSecretConfigured ? (
-          <p className="mt-3 text-[11px] leading-5 text-slate-500">
-            Régénérer le secret invalide immédiatement l’ancien.
+            {webhookSecretConfigured ? (
+              <p className="mt-3 text-[11px] leading-5 text-slate-500">
+                Régénérer le secret invalide immédiatement l’ancien.
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <p className="mt-5 text-[11px] leading-5 text-slate-500">
+            Seuls les propriétaires et administrateurs peuvent générer ou
+            régénérer le secret.
           </p>
-        ) : null}
+        )}
       </section>
     </div>
   );

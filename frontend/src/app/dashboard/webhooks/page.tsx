@@ -178,7 +178,10 @@ function statusStyle(status: string) {
 }
 
 export default async function WebhooksPage({ searchParams }: PageProps) {
-  await requireMerchant();
+  const session = await requireMerchant();
+
+  const canManage =
+    session.user.role === "OWNER" || session.user.role === "ADMIN";
 
   const params = await searchParams;
 
@@ -228,6 +231,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
       <WebhookConfigPanel
         webhookUrl={configuration.webhookUrl}
         webhookSecretConfigured={configuration.webhookSecretConfigured}
+        canManage={canManage}
       />
 
       <section className="grid gap-4 md:grid-cols-4">
