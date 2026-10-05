@@ -1,12 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+
+import { MERCHANT_SESSION_COOKIE } from "@/lib/merchant-auth";
 
 const API_URL = process.env.PAYMENT_API_URL ?? "http://localhost:3004";
-
-const MERCHANT_SESSION_COOKIE = "payment_platform_merchant_session";
 
 export type WebhookActionState = {
   status: "idle" | "success" | "error";
@@ -20,7 +20,10 @@ async function getMerchantToken() {
   return cookieStore.get(MERCHANT_SESSION_COOKIE)?.value;
 }
 
-async function readErrorMessage(response: Response, fallback: string) {
+async function readErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
   try {
     const body = (await response.json()) as {
       message?: string | string[];
@@ -163,5 +166,93 @@ export async function rotateWebhookSecret(
     status: "success",
     message: "Nouveau secret webhook généré. Copiez-le maintenant.",
     webhookSecret: result.webhookSecret,
+  };
+}
+
+export async function replayWebhookDelivery(
+  previousState: WebhookActionState,
+  formData: FormData,
+): Promise<WebhookActionState> {
+  void previousState;
+
+  const token = await getMerchantToken();
+
+  if (!token) {
+    redirect("/login");
+  }
+
+  const deliveryId = String(formData.get("deliveryId") ?? "").trim();
+
+  if (!deliveryId) {
+    return {
+      status: "error",
+      message: "Livraison webhook invalide.",
+    };
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${API_URL}/merchant/webhooks/${encodeURIComponent(deliveryId)}/replay`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return {
+      status: "error",
+      message: "Impossible de joindre le service de paiement.",
+    };
+  }
+
+  if (response.status === 401) {
+    redirect("/login");
+  }
+
+  if (response.status === 403) {
+    return {
+      status: "error",
+      message:
+        "Seuls les propriétaires et administrateurs peuvent relancer un webhook.",
+    };
+  }
+
+  if (response.status === 404) {
+    return {
+      status: "error",
+      message: "Cette livraison webhook est introuvable.",
+    };
+  }
+
+  if (response.status === 409) {
+    return {
+      status: "error",
+      message:
+        "Ce webhook ne peut être relancé que lorsque les tentatives sont épuisées.",
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      status: "error",
+      message: await readErrorMessage(
+        response,
+        "Impossible de relancer cette livraison webhook.",
+      ),
+    };
+  }
+
+  revalidatePath(`/dashboard/webhooks/${deliveryId}`);
+  revalidatePath("/dashboard/webhooks");
+  revalidatePath("/dashboard");
+
+  return {
+    status: "success",
+    message: "Le webhook a été remis en file d’attente.",
   };
 }

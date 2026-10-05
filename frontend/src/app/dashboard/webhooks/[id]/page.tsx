@@ -18,6 +18,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { requireMerchant } from "@/lib/merchant-auth";
+import { WebhookReplayButton } from "./webhook-replay-button";
 
 export const dynamic = "force-dynamic";
 
@@ -204,10 +205,13 @@ function DetailRow({
 }
 
 export default async function WebhookDetailPage({ params }: PageProps) {
-  await requireMerchant();
+  const session = await requireMerchant();
 
   const { id } = await params;
   const delivery = await getWebhookDelivery(id);
+
+  const canManage =
+    session.user.role === "OWNER" || session.user.role === "ADMIN";
 
   const appearance = statusStyle(delivery.status);
   const StatusIcon = appearance.icon;
@@ -265,6 +269,11 @@ export default async function WebhookDetailPage({ params }: PageProps) {
             <p className="mt-1 text-sm leading-6 text-slate-600">
               {appearance.description}
             </p>
+            {delivery.status === "EXHAUSTED" && canManage ? (
+              <div className="mt-4">
+                <WebhookReplayButton deliveryId={delivery.id} />
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
