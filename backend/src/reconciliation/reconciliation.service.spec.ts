@@ -454,4 +454,31 @@ describe('ReconciliationService', () => {
       results: [],
     });
   });
+  it('does not allow a merchant to reconcile another merchant payment', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.reconcilePayment('merchant-1', 'payment-owned-by-merchant-2'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'payment-owned-by-merchant-2',
+        merchantId: 'merchant-1',
+      },
+      include: {
+        merchant: true,
+        transactions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    expect(
+      merchantProviderAccountsService.getDecryptedCredentials,
+    ).not.toHaveBeenCalled();
+  });
 });
