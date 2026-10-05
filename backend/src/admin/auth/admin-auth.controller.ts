@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { AdminApiKeyGuard } from '../guards/admin-api-key.guard';
 import { AdminAuthService } from './admin-auth.service';
@@ -26,6 +27,13 @@ export class AdminAuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   login(@Body() dto: AdminCredentialsDto) {
     return this.adminAuthService.login(dto);
   }
