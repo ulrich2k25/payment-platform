@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'crypto';
+
 import {
   CanActivate,
   ExecutionContext,
@@ -17,10 +19,24 @@ export class AdminApiKeyGuard implements CanActivate {
       throw new UnauthorizedException('Admin API key is not configured');
     }
 
-    if (!adminKey || adminKey !== expectedAdminKey) {
+    if (
+      typeof adminKey !== 'string' ||
+      !this.secureCompare(adminKey, expectedAdminKey)
+    ) {
       throw new UnauthorizedException('Invalid admin API key');
     }
 
     return true;
+  }
+
+  private secureCompare(first: string, second: string): boolean {
+    const firstBuffer = Buffer.from(first, 'utf8');
+    const secondBuffer = Buffer.from(second, 'utf8');
+
+    if (firstBuffer.length !== secondBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(firstBuffer, secondBuffer);
   }
 }
