@@ -2,7 +2,7 @@ jest.mock('@nestjs/config', () => ({
   ConfigService: class ConfigService {},
 }));
 
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import {
   MerchantProviderAccountStatus,
@@ -55,6 +55,7 @@ describe('PaymentsService', () => {
       transaction: {
         create: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
       },
 
       $transaction: jest.fn(),
@@ -480,5 +481,148 @@ describe('PaymentsService', () => {
     await expect(
       service.findOne('merchant-1', 'missing-payment'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+  it('manually completes only a pending SANDBOX payment and sends its webhook', async () => {
+    const pendingPayment = {
+      id: 'sandbox-payment-1',
+      merchantId: 'merchant-1',
+      amount: 500,
+      currency: 'XAF',
+      method: PaymentMethod.MOBILE_MONEY,
+      provider: PaymentProvider.SANDBOX,
+      reference: 'ORDER-SANDBOX-001',
+      status: PaymentStatus.PENDING,
+      merchant: {
+        id: 'merchant-1',
+        webhookUrl: 'https://merchant.example.com/webhooks/payment',
+      },
+    };
+
+    const completedPayment = {
+      ...pendingPayment,
+      status: PaymentStatus.COMPLETED,
+    };
+
+    prisma.payment.findFirst.mockResolvedValue(pendingPayment);
+    prisma.payment.update.mockResolvedValue(completedPayment);
+    prisma.transaction.updateMany.mockResolvedValue({
+      count: 1,
+    });
+    webhooksService.sendPaymentCompleted.mockResolvedValue(undefined);
+
+    const result = await service.completeSandboxPayment(
+      'merchant-1',
+      'sandbox-payment-1',
+    );
+
+    expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'sandbox-payment-1',
+        merchantId: 'merchant-1',
+      },
+      include: {
+        merchant: true,
+      },
+    });
+
+    expect(prisma.payment.update).toHaveBeenCalledWith({
+      where: {
+        id: 'sandbox-payment-1',
+      },
+      data: {
+        status: PaymentStatus.COMPLETED,
+      },
+    });
+
+    expect(prisma.transaction.updateMany).toHaveBeenCalledWith({
+      where: {
+        paymentId: 'sandbox-payment-1',
+        provider: PaymentProvider.SANDBOX,
+      },
+      data: {
+        status: TransactionStatus.COMPLETED,
+      },
+    });
+
+    expect(webhooksService.sendPaymentCompleted).toHaveBeenCalledWith(
+      'https://merchant.example.com/webhooks/payment',
+      {
+        id: 'sandbox-payment-1',
+        merchantId: 'merchant-1',
+        amount: 500,
+        currency: 'XAF',
+        reference: 'ORDER-SANDBOX-001',
+      },
+      prisma,
+    );
+
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
+  });
+
+  it('does not allow a merchant to complete another merchant sandbox payment', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.completeSandboxPayment(
+        'merchant-1',
+        'payment-owned-by-merchant-2',
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(prisma.payment.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'payment-owned-by-merchant-2',
+        merchantId: 'merchant-1',
+      },
+      include: {
+        merchant: true,
+      },
+    });
+
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+    expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+    expect(webhooksService.sendPaymentCompleted).not.toHaveBeenCalled();
+  });
+
+  it('rejects manual completion of a non-SANDBOX payment', async () => {
+    prisma.payment.findFirst.mockResolvedValue({
+      id: 'fapshi-payment-1',
+      merchantId: 'merchant-1',
+      provider: PaymentProvider.FAPSHI,
+      status: PaymentStatus.PENDING,
+      merchant: {
+        id: 'merchant-1',
+        webhookUrl: null,
+      },
+    });
+
+    await expect(
+      service.completeSandboxPayment('merchant-1', 'fapshi-payment-1'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+    expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+    expect(webhooksService.sendPaymentCompleted).not.toHaveBeenCalled();
+  });
+
+  it('rejects manual completion of a SANDBOX payment that is not pending', async () => {
+    prisma.payment.findFirst.mockResolvedValue({
+      id: 'sandbox-payment-completed',
+      merchantId: 'merchant-1',
+      provider: PaymentProvider.SANDBOX,
+      status: PaymentStatus.COMPLETED,
+      merchant: {
+        id: 'merchant-1',
+        webhookUrl: null,
+      },
+    });
+
+    await expect(
+      service.completeSandboxPayment('merchant-1', 'sandbox-payment-completed'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+    expect(prisma.transaction.updateMany).not.toHaveBeenCalled();
+    expect(webhooksService.sendPaymentCompleted).not.toHaveBeenCalled();
   });
 });
