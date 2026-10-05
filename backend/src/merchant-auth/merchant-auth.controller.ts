@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { MerchantLoginDto } from './dto/merchant-login.dto';
 import { MerchantSignupDto } from './dto/merchant-signup.dto';
@@ -19,12 +20,26 @@ export class MerchantAuthController {
   constructor(private readonly merchantAuthService: MerchantAuthService) {}
 
   @Post('signup')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: 3,
+      ttl: 60_000,
+    },
+  })
   signup(@Body() dto: MerchantSignupDto) {
     return this.merchantAuthService.signup(dto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   login(@Body() dto: MerchantLoginDto) {
     return this.merchantAuthService.login(dto);
   }
