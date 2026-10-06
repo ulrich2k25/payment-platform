@@ -97,17 +97,17 @@ export function ProviderAccountCard({
   const isFapshi = account.provider === "FAPSHI";
 
   return (
-    <article className="overflow-hidden rounded-[24px] border border-[#e3dfd5] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-      <div className="border-b border-[#ece8df] p-6">
+    <article className="overflow-hidden rounded-2xl border border-[#e7e2d8] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
+      <div className="border-b border-[#eeeae2] px-5 py-5 sm:px-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#fff8e7] text-[#9a7523]">
-              <Workflow size={20} />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+              <Workflow size={18} />
             </div>
 
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-semibold text-[#0a0e17]">
+                <h2 className="text-base font-semibold tracking-tight text-[#0a0e17]">
                   {providerName(account.provider)}
                 </h2>
 
@@ -127,36 +127,42 @@ export function ProviderAccountCard({
             className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
               isActive
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-slate-200 bg-slate-50 text-slate-500"
+                : "border-slate-200 bg-slate-100 text-slate-500"
             }`}
           >
             {isActive ? <CheckCircle2 size={12} /> : <CircleOff size={12} />}
-
             {account.status}
           </span>
         </div>
       </div>
 
-      <div className="grid gap-6 p-6 xl:grid-cols-2">
+      <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-2">
         <section>
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-[#9a7523]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+              <ShieldCheck size={15} />
+            </div>
 
-            <h3 className="text-sm font-semibold text-[#0a0e17]">Routing</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-[#0a0e17]">Routing</h3>
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                Configuration de routage du provider
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-[#f7f6f2] p-4">
+            <div className="rounded-xl border border-[#eeeae2] bg-[#faf9f6] p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Priorité
               </p>
 
-              <p className="mt-2 text-lg font-semibold text-[#0a0e17]">
+              <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-[#0a0e17]">
                 {account.priority}
               </p>
             </div>
 
-            <div className="rounded-xl bg-[#f7f6f2] p-4">
+            <div className="rounded-xl border border-[#eeeae2] bg-[#faf9f6] p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Credentials
               </p>
@@ -176,7 +182,7 @@ export function ProviderAccountCard({
           </div>
 
           {account.externalAccountId ? (
-            <div className="mt-3 rounded-xl border border-[#ece8df] px-4 py-3">
+            <div className="mt-3 rounded-xl border border-[#eeeae2] bg-white px-4 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Compte externe
               </p>
@@ -209,12 +215,12 @@ export function ProviderAccountCard({
                   min={1}
                   max={1000}
                   defaultValue={account.priority}
-                  className="h-10 w-full rounded-xl border border-[#ded8cc] bg-white px-3 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] sm:max-w-[140px]"
+                  className="h-10 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10 sm:max-w-[140px]"
                 />
 
                 <button
                   type="submit"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#ded8cc] bg-white px-4 text-xs font-semibold text-[#0a0e17] transition hover:border-[#c8a24a]/60 hover:bg-[#fffdf8]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#e5e0d6] bg-white px-4 text-xs font-medium text-[#0a0e17] transition hover:border-[#c8a24a]/45 hover:bg-[#fffdf8] hover:text-[#9a7523]"
                 >
                   <Save size={14} />
                   Priorité
@@ -234,7 +240,7 @@ export function ProviderAccountCard({
 
                     <button
                       type="submit"
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#dbc47d] bg-[#fff8e7] px-4 text-xs font-semibold text-[#8a681d] transition hover:bg-[#fff3ce]"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#dbc47d] bg-[#fff8e7] px-4 text-xs font-medium text-[#8a681d] transition hover:border-[#c8a24a] hover:bg-[#fff3ce]"
                     >
                       <Star size={14} />
                       Définir par défaut
@@ -259,44 +265,53 @@ export function ProviderAccountCard({
 
                   <button
                     type="submit"
-                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-semibold transition ${
+                    className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-medium transition ${
                       isActive
-                        ? "border-red-200 bg-white text-red-700 hover:bg-red-50"
-                        : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+                        ? "border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50"
+                        : "border-emerald-200 bg-white text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50"
                     }`}
                   >
                     <Power size={14} />
-
                     {isActive ? "Désactiver" : "Activer"}
                   </button>
                 </form>
               </div>
             </div>
           ) : (
-            <div className="mt-5 rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
+            <div className="mt-5 rounded-xl border border-[#eeeae2] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
               Votre rôle dispose d’un accès en lecture seule aux providers.
             </div>
           )}
         </section>
 
-        <section className="border-t border-[#ece8df] pt-6 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
+        <section className="border-t border-[#eeeae2] pt-6 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
           <div className="flex items-center gap-2">
-            <KeyRound size={16} className="text-[#9a7523]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+              <KeyRound size={15} />
+            </div>
 
-            <h3 className="text-sm font-semibold text-[#0a0e17]">
-              Credentials provider
-            </h3>
+            <div>
+              <h3 className="text-sm font-semibold text-[#0a0e17]">
+                Credentials provider
+              </h3>
+
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                Secrets d&apos;authentification du provider
+              </p>
+            </div>
           </div>
 
-          <p className="mt-2 text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-xs leading-5 text-slate-500">
             Les secrets sont chiffrés côté serveur et ne sont jamais réaffichés
             après enregistrement.
           </p>
 
           {!isFapshi ? (
-            <div className="mt-5 rounded-xl border border-[#ece8df] bg-[#faf9f6] p-4">
+            <div className="mt-5 rounded-xl border border-[#eeeae2] bg-[#faf9f6] p-4">
               <div className="flex items-start gap-3">
-                <LockKeyhole size={16} className="mt-0.5 text-slate-400" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#e7e2d8] bg-white text-slate-400">
+                  <LockKeyhole size={15} />
+                </div>
 
                 <div>
                   <p className="text-sm font-medium text-[#0a0e17]">
@@ -339,7 +354,7 @@ export function ProviderAccountCard({
                       ? "Laisser vide pour conserver la valeur actuelle"
                       : "API User Fapshi"
                   }
-                  className="mt-2 h-11 w-full rounded-xl border border-[#ded8cc] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a]"
+                  className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10"
                 />
               </div>
 
@@ -362,7 +377,7 @@ export function ProviderAccountCard({
                       ? "Laisser vide pour conserver la valeur actuelle"
                       : "API Key Fapshi"
                   }
-                  className="mt-2 h-11 w-full rounded-xl border border-[#ded8cc] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a]"
+                  className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10"
                 />
               </div>
 
@@ -385,20 +400,20 @@ export function ProviderAccountCard({
                       ? "Laisser vide pour conserver la valeur actuelle"
                       : "Secret webhook Fapshi"
                   }
-                  className="mt-2 h-11 w-full rounded-xl border border-[#ded8cc] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a]"
+                  className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10"
                 />
               </div>
 
               <button
                 type="submit"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-semibold text-white transition hover:bg-[#151b28]"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-medium text-white shadow-[0_6px_18px_rgba(10,14,23,0.12)] transition hover:bg-[#151b28]"
               >
                 <LockKeyhole size={14} className="text-[#e6c76d]" />
                 Enregistrer les credentials
               </button>
             </form>
           ) : (
-            <div className="mt-5 rounded-xl border border-[#ece8df] bg-[#faf9f6] p-4 text-xs leading-5 text-slate-500">
+            <div className="mt-5 rounded-xl border border-[#eeeae2] bg-[#faf9f6] p-4 text-xs leading-5 text-slate-500">
               Seuls les propriétaires et administrateurs du marchand peuvent
               modifier les credentials.
             </div>

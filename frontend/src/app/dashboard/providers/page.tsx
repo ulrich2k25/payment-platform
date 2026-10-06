@@ -87,82 +87,104 @@ export default async function MerchantProvidersPage() {
     session.user.role === "OWNER" || session.user.role === "ADMIN";
 
   return (
-    <div className="space-y-7 pb-10">
-      <div className="max-w-2xl">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9a7523]">
-          Infrastructure
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-10">
+      <section>
+        <div className="mb-2 flex items-center gap-2">
+          <span className="rounded-full border border-[#dbc47d] bg-[#fff8e7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9a7523]">
+            Infrastructure
+          </span>
         </div>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#0a0e17] sm:text-3xl">
           Providers
         </h1>
 
-        <p className="mt-3 text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
           Gérez les connexions de paiement utilisées pour traiter les
           transactions de votre entreprise.
         </p>
-      </div>
+      </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <Workflow size={18} className="text-[#9a7523]" />
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+            <Workflow size={15} />
+          </div>
 
-          <p className="mt-4 text-xs text-slate-400">Providers</p>
+          <p className="mt-4 text-sm font-medium text-slate-500">Providers</p>
 
-          <p className="mt-1 text-2xl font-semibold text-[#0a0e17]">
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {accounts.length}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <CheckCircle2 size={18} className="text-emerald-600" />
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <CheckCircle2 size={15} />
+          </div>
 
-          <p className="mt-4 text-xs text-slate-400">Actifs</p>
+          <p className="mt-4 text-sm font-medium text-slate-500">Actifs</p>
 
-          <p className="mt-1 text-2xl font-semibold text-emerald-700">
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {activeCount}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <KeyRound size={18} className="text-[#9a7523]" />
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+            <KeyRound size={15} />
+          </div>
 
-          <p className="mt-4 text-xs text-slate-400">Credentials configurés</p>
+          <p className="mt-4 text-sm font-medium text-slate-500">
+            Credentials configurés
+          </p>
 
-          <p className="mt-1 text-2xl font-semibold text-[#0a0e17]">
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {configuredCount}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <Star size={18} className="text-[#9a7523]" />
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+            <Star size={15} />
+          </div>
 
-          <p className="mt-4 text-xs text-slate-400">Provider par défaut</p>
+          <p className="mt-4 text-sm font-medium text-slate-500">
+            Provider par défaut
+          </p>
 
-          <p className="mt-1 truncate text-lg font-semibold text-[#0a0e17]">
+          <p className="mt-2 truncate text-lg font-semibold tracking-[-0.02em] text-[#0a0e17]">
             {defaultAccount ? providerName(defaultAccount.provider) : "Aucun"}
           </p>
         </article>
       </section>
 
       {!canManage ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-[#e3dfd5] bg-white p-4">
-          <ShieldCheck size={17} className="mt-0.5 shrink-0 text-[#9a7523]" />
+        <section className="flex gap-3 rounded-2xl border border-[#e7e2d8] bg-white px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.02)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+            <ShieldCheck size={16} />
+          </div>
 
-          <p className="text-xs leading-5 text-slate-500">
-            Vous consultez cette page en lecture seule avec le rôle{" "}
-            <strong>{session.user.role}</strong>.
-          </p>
-        </div>
+          <div>
+            <p className="text-xs font-semibold text-[#0a0e17]">
+              Accès en lecture seule
+            </p>
+
+            <p className="mt-1 text-xs leading-6 text-slate-500">
+              Vous consultez cette page en lecture seule avec le rôle{" "}
+              <strong>{session.user.role}</strong>.
+            </p>
+          </div>
+        </section>
       ) : null}
 
       {accounts.length === 0 ? (
-        <section className="rounded-[24px] border border-[#e3dfd5] bg-white px-6 py-16 text-center shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff8e7] text-[#9a7523]">
+        <section className="rounded-2xl border border-[#e7e2d8] bg-white px-6 py-16 text-center shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
             <Workflow size={20} />
           </div>
 
-          <h2 className="mt-4 font-semibold text-[#0a0e17]">
+          <h2 className="mt-4 text-sm font-semibold text-[#0a0e17]">
             Aucun provider rattaché
           </h2>
 
@@ -172,7 +194,7 @@ export default async function MerchantProvidersPage() {
           </p>
         </section>
       ) : (
-        <section className="space-y-5">
+        <section className="space-y-4">
           {accounts.map((account) => (
             <ProviderAccountCard
               key={account.id}
