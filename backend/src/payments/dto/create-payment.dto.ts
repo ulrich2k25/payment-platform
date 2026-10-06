@@ -7,7 +7,6 @@ import {
   IsString,
   Length,
   Matches,
-  ValidateIf,
 } from 'class-validator';
 import {
   PaymentMethod,
@@ -34,9 +33,7 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   reference!: string;
 
-  @ValidateIf(
-    (dto: CreatePaymentDto) => dto.method === PaymentMethod.MOBILE_MONEY,
-  )
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @Matches(/^\+?[1-9]\d{7,14}$/, {
