@@ -13,11 +13,22 @@ export interface CreateProviderPaymentInput {
   payerPhoneNumber?: string;
 
   providerCredentials?: Record<string, string>;
+
+  providerConfiguration?: Record<string, unknown>;
 }
 
 export interface CreateProviderPaymentResult {
   providerReference: string;
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+  /**
+   * URL vers laquelle le client doit être redirigé
+   * lorsqu'un provider utilise un checkout hébergé.
+   *
+   * Exemple :
+   * Fapshi Initiate Pay.
+   */
+  checkoutUrl?: string;
 }
 
 export interface GetProviderPaymentStatusInput {

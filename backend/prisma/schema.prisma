@@ -141,6 +141,7 @@ model Payment {
   provider          PaymentProvider @default(SANDBOX)
   reference         String
   providerReference String?
+  checkoutUrl       String?
   idempotencyKey    String?
   status            PaymentStatus   @default(PENDING)
   createdAt         DateTime        @default(now())
