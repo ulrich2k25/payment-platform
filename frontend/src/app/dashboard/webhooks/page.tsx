@@ -212,21 +212,23 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
   ).length;
 
   return (
-    <div className="space-y-7">
-      <div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9a7523]">
-          Développeurs
+    <div className="mx-auto max-w-[1500px] space-y-6">
+      <section>
+        <div className="mb-2 flex items-center gap-2">
+          <span className="rounded-full border border-[#dbc47d] bg-[#fff8e7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9a7523]">
+            Développeurs
+          </span>
         </div>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#0a0e17] sm:text-3xl">
           Webhooks
         </h1>
 
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
           Configurez votre endpoint et suivez les événements envoyés
           automatiquement à votre infrastructure.
         </p>
-      </div>
+      </section>
 
       <WebhookConfigPanel
         webhookUrl={configuration.webhookUrl}
@@ -234,60 +236,92 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
         canManage={canManage}
       />
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <p className="text-xs text-slate-400">Total</p>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <p className="text-sm font-medium text-slate-500">Total</p>
 
-          <p className="mt-2 text-2xl font-semibold text-[#0a0e17]">
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {deliveries.pagination.total}
+          </p>
+
+          <p className="mt-2 text-xs text-slate-400">
+            Livraisons webhook enregistrées
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <p className="text-xs text-slate-400">Livrés sur cette page</p>
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">
+              Livrés sur cette page
+            </p>
 
-          <p className="mt-2 text-2xl font-semibold text-emerald-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <CheckCircle2 size={15} />
+            </div>
+          </div>
+
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {deliveredCount}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <p className="text-xs text-slate-400">En attente sur cette page</p>
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">
+              En attente sur cette page
+            </p>
 
-          <p className="mt-2 text-2xl font-semibold text-amber-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+              <Clock3 size={15} />
+            </div>
+          </div>
+
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {pendingCount}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-[#e3dfd5] bg-white p-5">
-          <p className="text-xs text-slate-400">Échecs sur cette page</p>
+        <article className="group rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#c8a24a]/45 hover:shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-slate-500">
+              Échecs sur cette page
+            </p>
 
-          <p className="mt-2 text-2xl font-semibold text-red-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <XCircle size={15} />
+            </div>
+          </div>
+
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
             {failedCount}
           </p>
         </article>
       </section>
 
-      <section className="overflow-hidden rounded-[24px] border border-[#e3dfd5] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-        <div className="flex items-center justify-between border-b border-[#ece8df] px-6 py-5">
+      <section className="overflow-hidden rounded-2xl border border-[#e7e2d8] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
+        <div className="flex items-center justify-between border-b border-[#eeeae2] px-5 py-5 sm:px-6">
           <div>
-            <h2 className="font-semibold text-[#0a0e17]">Livraisons webhook</h2>
+            <h2 className="text-base font-semibold tracking-tight text-[#0a0e17]">
+              Livraisons webhook
+            </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               Historique des événements envoyés à votre endpoint
             </p>
           </div>
 
-          <Send size={18} className="text-[#9a7523]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+            <Send size={17} />
+          </div>
         </div>
 
         {deliveries.data.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7f6f2] text-slate-400">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
               <Webhook size={20} />
             </div>
 
-            <p className="mt-4 font-medium text-[#0a0e17]">
+            <p className="mt-4 text-sm font-semibold text-[#0a0e17]">
               Aucune livraison webhook
             </p>
 
@@ -300,7 +334,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1160px]">
               <thead>
-                <tr className="border-b border-[#ece8df] bg-[#faf9f6] text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                <tr className="border-b border-[#eeeae2] bg-[#faf9f6] text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                   <th className="px-6 py-3">Événement</th>
                   <th className="px-4 py-3">Paiement</th>
                   <th className="px-4 py-3">Statut</th>
@@ -312,7 +346,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-[#ece8df]">
+              <tbody className="divide-y divide-[#f0ede6]">
                 {deliveries.data.map((delivery) => {
                   const appearance = statusStyle(delivery.status);
                   const StatusIcon = appearance.icon;
@@ -320,7 +354,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                   return (
                     <tr
                       key={delivery.id}
-                      className="group transition hover:bg-[#faf9f6]"
+                      className="group transition duration-200 hover:bg-[#fdfbf6]"
                     >
                       <td className="px-6 py-4">
                         <Link
@@ -362,7 +396,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
 
                       <td className="px-4 py-4">
                         {delivery.responseCode ? (
-                          <code className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                          <code className="rounded-lg border border-[#eeeae2] bg-[#faf9f6] px-2 py-1 text-xs text-slate-600">
                             {delivery.responseCode}
                           </code>
                         ) : (
@@ -391,7 +425,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                         <Link
                           href={`/dashboard/webhooks/${delivery.id}`}
                           aria-label={`Voir la livraison webhook ${delivery.id}`}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#ddd7cb] text-slate-500 transition hover:border-[#c9b06d] hover:bg-[#f7f6f2] hover:text-[#9a7523]"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#e5e0d6] bg-white text-slate-400 transition hover:border-[#c8a24a]/50 hover:bg-[#fffaf0] hover:text-[#9a7523]"
                         >
                           <ArrowUpRight size={15} />
                         </Link>
@@ -405,7 +439,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
         )}
 
         {deliveries.pagination.totalPages > 1 ? (
-          <div className="flex items-center justify-between border-t border-[#ece8df] px-6 py-4">
+          <div className="flex items-center justify-between border-t border-[#eeeae2] px-5 py-4 sm:px-6">
             <p className="text-xs text-slate-400">
               Page {deliveries.pagination.page} sur{" "}
               {deliveries.pagination.totalPages}
@@ -417,7 +451,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                   href={`/dashboard/webhooks?page=${
                     deliveries.pagination.page - 1
                   }`}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#ddd7cb] px-3 text-xs font-semibold text-slate-600 transition hover:bg-[#f7f6f2]"
+                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#e5e0d6] bg-white px-3 text-xs font-medium text-slate-600 transition hover:border-[#c8a24a]/40 hover:bg-[#fffdf8] hover:text-[#9a7523]"
                 >
                   <ArrowLeft size={14} />
                   Précédent
@@ -429,7 +463,7 @@ export default async function WebhooksPage({ searchParams }: PageProps) {
                   href={`/dashboard/webhooks?page=${
                     deliveries.pagination.page + 1
                   }`}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#ddd7cb] px-3 text-xs font-semibold text-slate-600 transition hover:bg-[#f7f6f2]"
+                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#e5e0d6] bg-white px-3 text-xs font-medium text-slate-600 transition hover:border-[#c8a24a]/40 hover:bg-[#fffdf8] hover:text-[#9a7523]"
                 >
                   Suivant
                   <ArrowRight size={14} />

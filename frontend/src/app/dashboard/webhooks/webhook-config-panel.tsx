@@ -60,15 +60,15 @@ export function WebhookConfigPanel({
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-      <section className="rounded-[24px] border border-[#e3dfd5] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.05)]">
-        <div className="flex items-start justify-between gap-4">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+      <section className="rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff8e7] text-[#9a7523]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
               <Webhook size={18} />
             </div>
 
-            <h2 className="mt-5 text-lg font-semibold text-[#0a0e17]">
+            <h2 className="mt-4 text-base font-semibold tracking-tight text-[#0a0e17]">
               Endpoint webhook
             </h2>
 
@@ -79,20 +79,26 @@ export function WebhookConfigPanel({
           </div>
 
           <span
-            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+            className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
               webhookUrl
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-slate-200 bg-slate-50 text-slate-500"
+                : "border-slate-200 bg-slate-100 text-slate-500"
             }`}
           >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                webhookUrl ? "bg-emerald-500" : "bg-slate-400"
+              }`}
+            />
+
             {webhookUrl ? "CONFIGURÉ" : "NON CONFIGURÉ"}
           </span>
         </div>
 
-        <form action={configurationAction} className="mt-6">
+        <form action={configurationAction} className="mt-5">
           <label
             htmlFor="webhookUrl"
-            className="text-xs font-semibold text-slate-600"
+            className="text-xs font-medium text-slate-600"
           >
             URL de destination
           </label>
@@ -106,16 +112,16 @@ export function WebhookConfigPanel({
             defaultValue={webhookUrl ?? ""}
             disabled={!canManage}
             placeholder="https://example.com/webhooks/payment"
-            className="mt-2 h-12 w-full rounded-xl border border-[#ddd7cb] bg-white px-4 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-4 focus:ring-[#c8a24a]/10 disabled:cursor-not-allowed disabled:bg-[#f7f6f2] disabled:text-slate-500"
+            className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-4 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10 disabled:cursor-not-allowed disabled:bg-[#faf9f6] disabled:text-slate-500"
           />
 
-          <div className="mt-3 rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
+          <div className="mt-3 rounded-xl border border-[#eeeae2] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
             Utilisez une URL publique accessible depuis Internet. Les adresses
             localhost et réseaux privés sont refusées.
           </div>
 
           {!canManage ? (
-            <div className="mt-4 rounded-xl border border-[#ece8df] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
+            <div className="mt-4 rounded-xl border border-[#eeeae2] bg-[#faf9f6] px-4 py-3 text-xs leading-5 text-slate-500">
               Accès en lecture seule. Seuls les propriétaires et administrateurs
               peuvent modifier la configuration webhook.
             </div>
@@ -137,7 +143,7 @@ export function WebhookConfigPanel({
             <button
               type="submit"
               disabled={configurationPending}
-              className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-semibold text-white transition hover:bg-[#151c2b] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-medium text-white shadow-[0_6px_18px_rgba(10,14,23,0.12)] transition hover:bg-[#151b28] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {configurationPending ? (
                 <RefreshCw size={14} className="animate-spin" />
@@ -151,12 +157,14 @@ export function WebhookConfigPanel({
         </form>
       </section>
 
-      <section className="rounded-[24px] border border-[#e3dfd5] bg-[#0a0e17] p-6 text-white shadow-[0_18px_55px_rgba(15,23,42,0.12)]">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-[#e6c76d]">
+      <section className="overflow-hidden rounded-2xl border border-[#c8a24a]/10 bg-[#0a0e17] p-5 text-white shadow-[0_16px_40px_rgba(10,14,23,0.18)] sm:p-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04] text-[#e6c76d]">
           <KeyRound size={18} />
         </div>
 
-        <h2 className="mt-5 text-lg font-semibold">Signing secret</h2>
+        <h2 className="mt-4 text-base font-semibold tracking-tight text-white">
+          Signing secret
+        </h2>
 
         <p className="mt-2 text-sm leading-6 text-slate-400">
           Ce secret permet à votre serveur de vérifier que les événements
@@ -183,7 +191,7 @@ export function WebhookConfigPanel({
         </div>
 
         {visibleSecret ? (
-          <div className="mt-5 rounded-2xl border border-[#e6c76d]/25 bg-[#e6c76d]/10 p-4">
+          <div className="mt-5 rounded-2xl border border-[#e6c76d]/20 bg-[#e6c76d]/10 p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#e6c76d]">
               Copiez ce secret maintenant
             </p>
@@ -195,14 +203,13 @@ export function WebhookConfigPanel({
             <button
               type="button"
               onClick={copySecret}
-              className="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 text-xs font-semibold text-white transition hover:bg-white/10"
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-xs font-medium text-white transition hover:border-white/20 hover:bg-white/[0.08]"
             >
               {copiedSecret ? <Check size={13} /> : <Copy size={13} />}
-
               {copiedSecret ? "Copié" : "Copier le secret"}
             </button>
 
-            <p className="mt-3 text-[11px] leading-5 text-slate-400">
+            <p className="mt-3 text-[11px] leading-5 text-slate-500">
               Après actualisation de la page, le secret complet ne sera plus
               affiché.
             </p>
@@ -227,7 +234,7 @@ export function WebhookConfigPanel({
               <button
                 type="submit"
                 disabled={rotationPending}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 text-xs font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-xs font-medium text-white transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <RefreshCw
                   size={13}
