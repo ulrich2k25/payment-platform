@@ -26,7 +26,9 @@ export class ApiKeysService {
       throw new NotFoundException('Merchant not found');
     }
 
-    const key = `sk_test_${randomBytes(24).toString('hex')}`;
+    const keyPrefix = this.getApiKeyPrefix();
+
+    const key = `${keyPrefix}${randomBytes(24).toString('hex')}`;
 
     const keyHash = createHash('sha256').update(key).digest('hex');
 
@@ -138,5 +140,13 @@ export class ApiKeysService {
         createdAt: true,
       },
     });
+  }
+
+  private getApiKeyPrefix(): 'sk_test_' | 'sk_live_' {
+    const environment = (process.env.API_KEY_ENVIRONMENT ?? 'test')
+      .trim()
+      .toLowerCase();
+
+    return environment === 'live' ? 'sk_live_' : 'sk_test_';
   }
 }

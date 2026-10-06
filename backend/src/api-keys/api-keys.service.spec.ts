@@ -11,6 +11,8 @@ describe('ApiKeysService', () => {
   const now = new Date();
 
   beforeEach(() => {
+    delete process.env.API_KEY_ENVIRONMENT;
+
     prisma = {
       merchant: {
         findUnique: jest.fn(),
@@ -28,7 +30,11 @@ describe('ApiKeysService', () => {
     service = new ApiKeysService(prisma as PrismaService);
   });
 
-  it('creates an API key for a merchant and stores only its hash', async () => {
+  afterEach(() => {
+    delete process.env.API_KEY_ENVIRONMENT;
+  });
+
+  it('creates a test API key by default and stores only its hash', async () => {
     prisma.merchant.findUnique.mockResolvedValue({
       id: 'merchant-1',
     });
@@ -52,6 +58,32 @@ describe('ApiKeysService', () => {
 
     expect(createCall.data.keyHash).not.toBe(result.key);
 
+    expect(createCall.data.keyHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('creates a live API key when API_KEY_ENVIRONMENT is live', async () => {
+    process.env.API_KEY_ENVIRONMENT = 'live';
+
+    prisma.merchant.findUnique.mockResolvedValue({
+      id: 'merchant-1',
+    });
+
+    prisma.apiKey.create.mockImplementation(async ({ data }: any) => ({
+      id: 'key-1',
+      ...data,
+      status: ApiKeyStatus.ACTIVE,
+      lastUsedAt: null,
+      revokedAt: null,
+      createdAt: now,
+    }));
+
+    const result = await service.createForMerchant('merchant-1');
+
+    expect(result.key).toMatch(/^sk_live_[a-f0-9]{48}$/);
+
+    const createCall = prisma.apiKey.create.mock.calls[0][0];
+
+    expect(createCall.data.keyHash).not.toBe(result.key);
     expect(createCall.data.keyHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
