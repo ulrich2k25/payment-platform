@@ -88,31 +88,33 @@ export default async function MerchantSettingsPage() {
   ];
 
   return (
-    <div className="pb-10">
-      <div className="max-w-2xl">
-        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9a7523]">
-          Paramètres
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-10">
+      <section>
+        <div className="mb-2 flex items-center gap-2">
+          <span className="rounded-full border border-[#dbc47d] bg-[#fff8e7] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9a7523]">
+            Paramètres
+          </span>
         </div>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0a0e17]">
+        <h1 className="text-2xl font-semibold tracking-[-0.035em] text-[#0a0e17] sm:text-3xl">
           Compte marchand
         </h1>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
           Gérez les informations de votre entreprise et consultez les
           informations de sécurité liées à votre compte.
         </p>
-      </div>
+      </section>
 
-      <div className="mt-8 grid items-start gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-2xl border border-[#e7e2d8] bg-white p-6 shadow-sm">
+      <div className="grid items-start gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-2xl border border-[#e7e2d8] bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)] sm:p-6">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff8e7] text-[#9a7523]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
               <Building2 size={18} />
             </div>
 
             <div>
-              <h2 className="text-base font-semibold text-[#0a0e17]">
+              <h2 className="text-base font-semibold tracking-tight text-[#0a0e17]">
                 Profil de l&apos;entreprise
               </h2>
 
@@ -123,7 +125,7 @@ export default async function MerchantSettingsPage() {
             </div>
           </div>
 
-          <div className="mt-6 border-t border-[#eee9df] pt-6">
+          <div className="mt-5 border-t border-[#eeeae2] pt-5">
             <MerchantProfileForm
               initialName={session.merchant.name}
               initialEmail={session.merchant.email}
@@ -132,30 +134,35 @@ export default async function MerchantSettingsPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#e7e2d8] bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fff8e7] text-[#9a7523]">
-              <ShieldCheck size={18} />
-            </div>
+        <section className="overflow-hidden rounded-2xl border border-[#e7e2d8] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
+          <div className="border-b border-[#eeeae2] p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#eee8da] bg-[#fffaf0] text-[#9a7523]">
+                <ShieldCheck size={18} />
+              </div>
 
-            <div>
-              <h2 className="text-base font-semibold text-[#0a0e17]">
-                Compte et sécurité
-              </h2>
+              <div>
+                <h2 className="text-base font-semibold tracking-tight text-[#0a0e17]">
+                  Compte et sécurité
+                </h2>
 
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                Informations liées à votre accès au Merchant Dashboard.
-              </p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Informations liées à votre accès au Merchant Dashboard.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 divide-y divide-[#eee9df] border-y border-[#eee9df]">
+          <div className="divide-y divide-[#f0ede6]">
             {accountItems.map((item) => {
               const Icon = item.icon;
 
               return (
-                <div key={item.label} className="flex items-start gap-3 py-4">
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400">
+                <div
+                  key={item.label}
+                  className="flex items-start gap-3 px-5 py-4 transition hover:bg-[#fdfbf6] sm:px-6"
+                >
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#eeeae2] bg-[#faf9f6] text-slate-400">
                     <Icon size={15} />
                   </div>
 
@@ -173,7 +180,7 @@ export default async function MerchantSettingsPage() {
             })}
           </div>
 
-          <div className="mt-6">
+          <div className="border-t border-[#eeeae2] p-5 sm:p-6">
             <h3 className="text-sm font-semibold text-[#0a0e17]">Session</h3>
 
             <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -183,7 +190,7 @@ export default async function MerchantSettingsPage() {
             <form action={logoutMerchant} className="mt-4">
               <button
                 type="submit"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#ded8cc] bg-white px-4 text-sm font-semibold text-[#0a0e17] transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#e5e0d6] bg-white px-4 text-sm font-medium text-[#0a0e17] transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
               >
                 <LogOut size={15} />
                 Se déconnecter
