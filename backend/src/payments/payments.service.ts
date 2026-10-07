@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -28,6 +29,8 @@ interface ResolvedProvider {
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly webhooksService: WebhooksService,
@@ -193,7 +196,14 @@ export class PaymentsService {
             }
           : {}),
       });
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown provider error';
+
+      this.logger.error(
+        `Payment provider request failed for ${payment.provider}: ${message}`,
+      );
+
       await this.prisma.$transaction([
         this.prisma.transaction.update({
           where: {
