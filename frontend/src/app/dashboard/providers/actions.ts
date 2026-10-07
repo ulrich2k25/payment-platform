@@ -108,6 +108,49 @@ export async function updateProviderAccount(
     };
 
     successMessage = "La priorité a été mise à jour.";
+  } else if (operation === "updateConfiguration") {
+    const paymentMode = String(formData.get("paymentMode") ?? "")
+      .trim()
+      .toUpperCase();
+
+    const redirectUrl = String(formData.get("redirectUrl") ?? "").trim();
+
+    if (paymentMode !== "DIRECT" && paymentMode !== "HOSTED") {
+      return {
+        status: "error",
+        message: "Le mode de paiement doit être DIRECT ou HOSTED.",
+      };
+    }
+
+    const configuration: Record<string, string> = {
+      paymentMode,
+    };
+
+    if (redirectUrl) {
+      try {
+        const parsedUrl = new URL(redirectUrl);
+
+        if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+          return {
+            status: "error",
+            message: "L’URL de redirection doit utiliser HTTP ou HTTPS.",
+          };
+        }
+      } catch {
+        return {
+          status: "error",
+          message: "L’URL de redirection n’est pas valide.",
+        };
+      }
+
+      configuration.redirectUrl = redirectUrl;
+    }
+
+    body = {
+      configuration,
+    };
+
+    successMessage = "La configuration du provider a été mise à jour.";
   } else {
     return {
       status: "error",

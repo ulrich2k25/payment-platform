@@ -7,6 +7,7 @@ import {
 import { MerchantProviderAccountStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateMerchantDashboardProviderAccountDto } from './dto/update-merchant-dashboard-provider-account.dto';
+import { UpdateMerchantProviderAccountDto } from './dto/update-merchant-provider-account.dto';
 import { MerchantProviderAccountsService } from './merchant-provider-accounts.service';
 
 @Injectable()
@@ -30,9 +31,42 @@ export class MerchantDashboardProviderAccountsService {
       providerAccountId,
     );
 
+    if (
+      dto.configuration &&
+      account.provider.trim().toUpperCase() !== 'FAPSHI'
+    ) {
+      throw new BadRequestException(
+        'Provider configuration is currently supported only for FAPSHI',
+      );
+    }
+
     await this.assertProviderReadyForUpdate(account, dto);
 
-    return this.merchantProviderAccountsService.update(providerAccountId, dto);
+    const updateDto: UpdateMerchantProviderAccountDto = {
+      status: dto.status,
+      isDefault: dto.isDefault,
+      priority: dto.priority,
+      configuration: dto.configuration
+        ? {
+            ...this.toConfigurationRecord(account.configuration),
+            ...(dto.configuration.paymentMode !== undefined
+              ? {
+                  paymentMode: dto.configuration.paymentMode,
+                }
+              : {}),
+            ...(dto.configuration.redirectUrl !== undefined
+              ? {
+                  redirectUrl: dto.configuration.redirectUrl,
+                }
+              : {}),
+          }
+        : undefined,
+    };
+
+    return this.merchantProviderAccountsService.update(
+      providerAccountId,
+      updateDto,
+    );
   }
 
   async updateCredentials(
@@ -70,6 +104,7 @@ export class MerchantDashboardProviderAccountsService {
       id: string;
       provider: string;
       credentialsEncrypted: string | null;
+      configuration: unknown;
     },
     dto: UpdateMerchantDashboardProviderAccountDto,
   ): Promise<void> {
@@ -130,6 +165,7 @@ export class MerchantDashboardProviderAccountsService {
         id: true,
         provider: true,
         credentialsEncrypted: true,
+        configuration: true,
       },
     });
 
@@ -138,5 +174,21 @@ export class MerchantDashboardProviderAccountsService {
     }
 
     return account;
+  }
+
+  private toConfigurationRecord(
+    configuration: unknown,
+  ): Record<string, unknown> {
+    if (
+      configuration === null ||
+      typeof configuration !== 'object' ||
+      Array.isArray(configuration)
+    ) {
+      return {};
+    }
+
+    return {
+      ...(configuration as Record<string, unknown>),
+    };
   }
 }

@@ -8,6 +8,7 @@ import {
   LockKeyhole,
   Power,
   Save,
+  Settings2,
   ShieldCheck,
   Star,
   Workflow,
@@ -38,6 +39,11 @@ type ProviderAccountCardProps = {
   canManage: boolean;
 };
 
+type ProviderConfiguration = {
+  paymentMode?: "DIRECT" | "HOSTED";
+  redirectUrl?: string;
+};
+
 const initialState: ProviderActionState = {
   status: "idle",
 };
@@ -59,6 +65,33 @@ function providerName(provider: string) {
     default:
       return provider;
   }
+}
+
+function readProviderConfiguration(
+  configuration: unknown,
+): ProviderConfiguration {
+  if (
+    configuration === null ||
+    typeof configuration !== "object" ||
+    Array.isArray(configuration)
+  ) {
+    return {};
+  }
+
+  const record = configuration as Record<string, unknown>;
+
+  const paymentMode =
+    record.paymentMode === "DIRECT" || record.paymentMode === "HOSTED"
+      ? record.paymentMode
+      : undefined;
+
+  const redirectUrl =
+    typeof record.redirectUrl === "string" ? record.redirectUrl : undefined;
+
+  return {
+    paymentMode,
+    redirectUrl,
+  };
 }
 
 function ActionMessage({ state }: { state: ProviderActionState }) {
@@ -96,6 +129,8 @@ export function ProviderAccountCard({
   const isActive = account.status === "ACTIVE";
   const isFapshi = account.provider === "FAPSHI";
 
+  const configuration = readProviderConfiguration(account.configuration);
+
   return (
     <article className="overflow-hidden rounded-2xl border border-[#e7e2d8] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.02),0_8px_24px_rgba(15,23,42,0.035)]">
       <div className="border-b border-[#eeeae2] px-5 py-5 sm:px-6">
@@ -131,6 +166,7 @@ export function ProviderAccountCard({
             }`}
           >
             {isActive ? <CheckCircle2 size={12} /> : <CircleOff size={12} />}
+
             {account.status}
           </span>
         </div>
@@ -145,6 +181,7 @@ export function ProviderAccountCard({
 
             <div>
               <h3 className="text-sm font-semibold text-[#0a0e17]">Routing</h3>
+
               <p className="mt-0.5 text-[11px] text-slate-400">
                 Configuration de routage du provider
               </p>
@@ -226,6 +263,95 @@ export function ProviderAccountCard({
                   Priorité
                 </button>
               </form>
+
+              {isFapshi ? (
+                <div className="rounded-xl border border-[#eeeae2] bg-[#faf9f6] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#eee8da] bg-white text-[#9a7523]">
+                      <Settings2 size={15} />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-[#0a0e17]">
+                        Configuration Fapshi
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        Définissez le mode d&apos;initialisation du paiement et
+                        l&apos;URL utilisée après le checkout.
+                      </p>
+                    </div>
+                  </div>
+
+                  <form action={accountAction} className="mt-4 space-y-4">
+                    <input
+                      type="hidden"
+                      name="providerAccountId"
+                      value={account.id}
+                    />
+
+                    <input
+                      type="hidden"
+                      name="operation"
+                      value="updateConfiguration"
+                    />
+
+                    <div>
+                      <label
+                        htmlFor={`paymentMode-${account.id}`}
+                        className="text-xs font-medium text-slate-600"
+                      >
+                        Payment mode
+                      </label>
+
+                      <select
+                        id={`paymentMode-${account.id}`}
+                        name="paymentMode"
+                        required
+                        defaultValue={configuration.paymentMode ?? ""}
+                        className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10"
+                      >
+                        <option value="" disabled>
+                          Sélectionner un mode
+                        </option>
+
+                        <option value="HOSTED">HOSTED</option>
+                        <option value="DIRECT">DIRECT</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`redirectUrl-${account.id}`}
+                        className="text-xs font-medium text-slate-600"
+                      >
+                        Redirect URL
+                      </label>
+
+                      <input
+                        id={`redirectUrl-${account.id}`}
+                        name="redirectUrl"
+                        type="url"
+                        defaultValue={configuration.redirectUrl ?? ""}
+                        placeholder="https://example.com/payment/return"
+                        className="mt-2 h-11 w-full rounded-xl border border-[#e5e0d6] bg-white px-3 text-sm text-[#0a0e17] outline-none transition placeholder:text-slate-300 focus:border-[#c8a24a] focus:ring-2 focus:ring-[#c8a24a]/10"
+                      />
+
+                      <p className="mt-2 text-[11px] leading-5 text-slate-400">
+                        Pour Ubiza : https://getubiza.com/payment/return
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#0a0e17] px-4 text-xs font-medium text-white shadow-[0_6px_18px_rgba(10,14,23,0.12)] transition hover:bg-[#151b28]"
+                    >
+                      <Save size={14} className="text-[#e6c76d]" />
+                      Enregistrer la configuration
+                    </button>
+                  </form>
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap gap-3">
                 {!account.isDefault ? (

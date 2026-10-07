@@ -68,6 +68,9 @@ describe('MerchantDashboardProviderAccountsService', () => {
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: 'encrypted-value',
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     providerAccountsService.update.mockResolvedValue({
@@ -88,6 +91,7 @@ describe('MerchantDashboardProviderAccountsService', () => {
         id: true,
         provider: true,
         credentialsEncrypted: true,
+        configuration: true,
       },
     });
 
@@ -101,11 +105,73 @@ describe('MerchantDashboardProviderAccountsService', () => {
     });
   });
 
+  it('preserves existing configuration during a partial configuration update', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      provider: 'FAPSHI',
+      credentialsEncrypted: 'encrypted-value',
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
+    });
+
+    providerAccountsService.update.mockResolvedValue({
+      id: 'account-1',
+      configuration: {
+        paymentMode: 'HOSTED',
+        redirectUrl: 'https://getubiza.com/payment/return',
+      },
+    });
+
+    const result = await service.update('merchant-1', 'account-1', {
+      configuration: {
+        redirectUrl: 'https://getubiza.com/payment/return',
+      },
+    });
+
+    expect(providerAccountsService.update).toHaveBeenCalledWith('account-1', {
+      configuration: {
+        paymentMode: 'HOSTED',
+        redirectUrl: 'https://getubiza.com/payment/return',
+      },
+    });
+
+    expect(result).toEqual({
+      id: 'account-1',
+      configuration: {
+        paymentMode: 'HOSTED',
+        redirectUrl: 'https://getubiza.com/payment/return',
+      },
+    });
+  });
+
+  it('rejects provider configuration updates for unsupported providers', async () => {
+    prisma.merchantProviderAccount.findFirst.mockResolvedValue({
+      id: 'account-1',
+      provider: 'OTHER_PROVIDER',
+      credentialsEncrypted: null,
+      configuration: {},
+    });
+
+    await expect(
+      service.update('merchant-1', 'account-1', {
+        configuration: {
+          redirectUrl: 'https://example.com/payment/return',
+        },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(providerAccountsService.update).not.toHaveBeenCalled();
+  });
+
   it('activates FAPSHI when all required credentials are configured', async () => {
     prisma.merchantProviderAccount.findFirst.mockResolvedValue({
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: 'encrypted-value',
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     providerAccountsService.getDecryptedCredentials.mockResolvedValue({
@@ -142,6 +208,9 @@ describe('MerchantDashboardProviderAccountsService', () => {
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: null,
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     await expect(
@@ -162,6 +231,9 @@ describe('MerchantDashboardProviderAccountsService', () => {
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: 'encrypted-value',
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     providerAccountsService.getDecryptedCredentials.mockResolvedValue({
@@ -195,6 +267,9 @@ describe('MerchantDashboardProviderAccountsService', () => {
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: null,
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     providerAccountsService.updateCredentials.mockResolvedValue({
@@ -227,6 +302,9 @@ describe('MerchantDashboardProviderAccountsService', () => {
       id: 'account-1',
       provider: 'FAPSHI',
       credentialsEncrypted: 'encrypted-value',
+      configuration: {
+        paymentMode: 'HOSTED',
+      },
     });
 
     providerAccountsService.getDecryptedCredentials.mockResolvedValue({
